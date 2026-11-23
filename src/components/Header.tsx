@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { CATEGORIES, type Category } from '../data/products'
 import { useCart } from '../context/CartContext'
 import { PHONE_DISPLAY, PHONE_TEL, WHATSAPP_DISPLAY, waLink } from '../lib/pricing'
+import { scrollToId } from '../lib/filters'
 
 interface Props {
   activeCategory: Category | 'all'
@@ -22,10 +23,47 @@ export default function Header({ activeCategory, onCategory, onSearch, query }: 
   const [q, setQ] = useState(query)
   const [bump, setBump] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const stripRef = useRef<HTMLDivElement>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+  // navigation queued until the menu/search panel has fully collapsed, so offsets are measured on the final layout
+  const pending = useRef<(() => void) | null>(null)
   const { scrollY } = useScroll()
   useMotionValueEvent(scrollY, 'change', (y) => setScrolled(y > 8))
 
   useEffect(() => setQ(query), [query])
+
+  // publish the collapsed header height (strip + bar + 1px border) for scroll-margin-top and JS scrolling
+  useEffect(() => {
+    const set = () => {
+      const h = (stripRef.current?.offsetHeight ?? 0) + (barRef.current?.offsetHeight ?? 0) + 1
+      document.documentElement.style.setProperty('--header-h', `${h}px`)
+    }
+    set()
+    const ro = new ResizeObserver(set)
+    if (stripRef.current) ro.observe(stripRef.current)
+    if (barRef.current) ro.observe(barRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  /** Close any open panel, then run the navigation once it has finished collapsing. */
+  const navigate = (action: () => void) => {
+    if (!menu && !searchOpen) return action()
+    pending.current = action
+    setMenu(false)
+    setSearchOpen(false)
+  }
+  const flush = () => {
+    const run = pending.current
+    pending.current = null
+    run?.()
+  }
+  const goSection = (id: string) => (e: { preventDefault: () => void }) => {
+    e.preventDefault()
+    navigate(() => {
+      scrollToId(id)
+      history.replaceState(null, '', `#${id}`)
+    })
+  }
   useEffect(() => { if (searchOpen) inputRef.current?.focus() }, [searchOpen])
   useEffect(() => {
     if (!lastAdded) return
@@ -36,15 +74,14 @@ export default function Header({ activeCategory, onCategory, onSearch, query }: 
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    onSearch(q.trim())
-    setSearchOpen(false)
-    setMenu(false)
+    const term = q.trim()
+    navigate(() => onSearch(term))
   }
 
   return (
     <header className="sticky top-0 z-40">
       {/* announcement */}
-      <div className="border-b border-line bg-ice">
+      <div ref={stripRef} className="border-b border-line bg-ice">
         <div className="container-x flex h-9 items-center justify-center gap-6 text-[12px] text-slate-600 lg:justify-between">
           <p className="truncate">
             <span className="font-semibold text-ink">Wholesale only</span>
@@ -59,8 +96,8 @@ export default function Header({ activeCategory, onCategory, onSearch, query }: 
       </div>
 
       <div className={`border-b transition-[background-color,box-shadow,border-color] duration-500 ${scrolled ? 'border-line bg-white/95 shadow-[0_10px_30px_-24px_rgba(20,24,26,.35)] backdrop-blur-xl' : 'border-transparent bg-white'}`}>
-        <div className="container-x flex h-[72px] items-center gap-6">
-          <a href="#top" className="flex shrink-0 items-center gap-3" aria-label="Billal Trading Corporation, home">
+        <div ref={barRef} className="container-x flex h-[72px] items-center gap-6">
+          <a href="#top" onClick={(e) => { e.preventDefault(); navigate(() => window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })) }} className="flex shrink-0 items-center gap-3" aria-label="Billal Trading Corporation, home">
             <img src="/brand/logo.jpg" alt="" className="h-10 w-10 rounded-full" />
             <span className="leading-none">
               <span className="display block text-[19px] !tracking-[-0.01em]">Billal Trading</span>
@@ -72,7 +109,7 @@ export default function Header({ activeCategory, onCategory, onSearch, query }: 
             {NAV.map((c) => {
               const active = activeCategory === c.id
               return (
-                <button key={c.id} onClick={() => onCategory(c.id)} className={`relative px-3.5 py-2 text-[13.5px] font-medium transition-colors ${active ? 'text-ink' : 'text-slate-600 hover:text-ink'}`}>
+                <button key={c.id} onClick={() => navigate(() => onCategory(c.id))} className={`relative px-3.5 py-2 text-[13.5px] font-medium transition-colors ${active ? 'text-ink' : 'text-slate-600 hover:text-ink'}`}>
                   {c.label}
                   {active && <motion.span layoutId="nav-underline" className="absolute inset-x-3.5 -bottom-px h-px bg-ink" transition={{ type: 'spring', stiffness: 380, damping: 34 }} />}
                 </button>
@@ -101,7 +138,7 @@ export default function Header({ activeCategory, onCategory, onSearch, query }: 
           </div>
         </div>
 
-        <AnimatePresence initial={false}>
+        <AnimatePresence initial={false} onExitComplete={flush}>
           {searchOpen && (
             <motion.div key="search" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden border-t border-line bg-white">
               <form onSubmit={submit} role="search" className="container-x flex items-center gap-4 py-5">
@@ -117,14 +154,14 @@ export default function Header({ activeCategory, onCategory, onSearch, query }: 
                 <ul className="divide-y divide-line">
                   {NAV.map((c) => (
                     <li key={c.id}>
-                      <button onClick={() => { onCategory(c.id); setMenu(false) }} className={`flex w-full items-center justify-between py-3.5 text-left text-[15px] ${activeCategory === c.id ? 'font-semibold text-ink' : 'text-slate-600'}`}>
+                      <button onClick={() => navigate(() => onCategory(c.id))} className={`flex w-full items-center justify-between py-3.5 text-left text-[15px] ${activeCategory === c.id ? 'font-semibold text-ink' : 'text-slate-600'}`}>
                         {c.id === 'all' ? 'All wholesale lines' : c.label}
                         {activeCategory === c.id && <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />}
                       </button>
                     </li>
                   ))}
-                  <li><a href="#how" onClick={() => setMenu(false)} className="block py-3.5 text-[15px] text-slate-600">How ordering works</a></li>
-                  <li><a href="#contact" onClick={() => setMenu(false)} className="block py-3.5 text-[15px] text-slate-600">Contact the desk</a></li>
+                  <li><a href="#how" onClick={goSection('how')} className="block py-3.5 text-[15px] text-slate-600">How ordering works</a></li>
+                  <li><a href="#contact" onClick={goSection('contact')} className="block py-3.5 text-[15px] text-slate-600">Contact the desk</a></li>
                 </ul>
               </div>
             </motion.div>

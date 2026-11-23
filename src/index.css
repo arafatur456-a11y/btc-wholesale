@@ -3,7 +3,9 @@
 @tailwind utilities;
 
 @layer base {
-  html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+  html { scroll-behavior: smooth; --header-h: 109px; }
+  /* every anchor target lands exactly below the sticky header (height measured live in Header.tsx) */
+  section[id] { scroll-margin-top: var(--header-h); }
   body { @apply bg-white font-sans text-ink antialiased; font-feature-settings: 'ss01' 1; }
   h1, h2, h3 { text-wrap: balance; }
   p { text-wrap: pretty; }

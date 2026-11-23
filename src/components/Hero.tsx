@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { PRODUCTS } from '../data/products'
 import { waLink } from '../lib/pricing'
 import { WhatsAppIcon } from './ui'
+import { useIsMobile } from '../lib/motion'
 
 const SHOWCASE = [
   { key: 'bridal', title: 'Bridal Choker & Tikka Sets', origin: 'Kashmir', meta: 'From 3 sets per lot', img: '/products/mix-24.jpg' },
@@ -12,7 +13,29 @@ const SHOWCASE = [
   { key: 'waist', title: 'Gold Motif Waist Chains', origin: 'Thailand', meta: 'From 1 dozen', img: '/products/waist-0.jpg' },
 ]
 const N = SHOWCASE.length
-const AUTOPLAY = 5200
+
+/** Desktop keeps the slow, luxury pacing; below md everything is tighter and snappier. */
+const TIMING = {
+  desktop: {
+    autoplay: 5200,
+    slot: { type: 'spring' as const, stiffness: 60, damping: 17, mass: 1 },
+    fan: { stiffness: 110, damping: 26, mass: 0.5 },
+    fanOffset: ['start 30%', 'end start'] as const,
+    tilt: { stiffness: 80, damping: 18, mass: 0.9 },
+    caption: 0.35,
+    enter: { duration: 1, step: 0.08, stack: { duration: 1.2, delay: 0.2 } },
+  },
+  mobile: {
+    autoplay: 2600,
+    slot: { type: 'spring' as const, stiffness: 240, damping: 26, mass: 0.6 },
+    fan: { stiffness: 300, damping: 34, mass: 0.25 },
+    fanOffset: ['start 75%', 'center start'] as const,
+    tilt: { stiffness: 200, damping: 24, mass: 0.5 },
+    caption: 0.16,
+    enter: { duration: 0.45, step: 0.04, stack: { duration: 0.5, delay: 0.05 } },
+  },
+}
+type Timing = (typeof TIMING)['desktop'] | (typeof TIMING)['mobile']
 
 // depth slots for the fanned stack; slot 3 holds the card that just left the front
 const SLOT = [
@@ -29,11 +52,12 @@ interface CardProps {
   sheen: MotionValue<string>
   tint: MotionValue<string>
   reduce: boolean
+  slotTransition: Timing['slot']
   onPick: () => void
 }
 
 /** One card: outer layer = scroll-linked fan-out, inner layer = carousel slot spring. */
-function StackCard({ item, k, fan, sheen, tint, reduce, onPick }: CardProps) {
+function StackCard({ item, k, fan, sheen, tint, reduce, slotTransition, onPick }: CardProps) {
   const isFront = k === 0
   const depthIdx = Math.min(k, 2)
   // as the hero scrolls away, the stack spreads apart in 3D: back cards swing out further
@@ -57,7 +81,7 @@ function StackCard({ item, k, fan, sheen, tint, reduce, onPick }: CardProps) {
         aria-label={isFront ? `${item.title}, ${item.origin} import` : undefined}
         initial={false}
         animate={{ x: slot.x, y: slot.y, z: slot.z, rotate: slot.rotate, scale: slot.scale, opacity: slot.opacity }}
-        transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 60, damping: 17, mass: 1 }}
+        transition={reduce ? { duration: 0 } : slotTransition}
         style={{ transformStyle: 'preserve-3d', transformOrigin: '50% 100%' }}
         className="absolute inset-0 cursor-pointer rounded-[28px] p-[1.5px] shadow-frame"
       >
@@ -82,7 +106,7 @@ function StackCard({ item, k, fan, sheen, tint, reduce, onPick }: CardProps) {
   )
 }
 
-function CardStack() {
+function CardStack({ t }: { t: Timing }) {
   const reduce = !!useReducedMotion()
   const [front, setFront] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -90,14 +114,14 @@ function CardStack() {
 
   const mx = useMotionValue(0.5)
   const my = useMotionValue(0.5)
-  const sp = { stiffness: 80, damping: 18, mass: 0.9 }
+  const sp = t.tilt
   const rotY = useSpring(useTransform(mx, [0, 1], [-10, 10]), sp)
   const rotX = useSpring(useTransform(my, [0, 1], [8, -8]), sp)
   const sheen = useTransform([mx, my], ([x, y]: number[]) => `radial-gradient(120% 80% at ${x * 100}% ${y * 100}%, rgba(255,255,255,.55), rgba(255,255,255,0) 50%)`)
 
   // scroll-linked depth: progress 0 → 1 as the stack travels from rest to leaving the viewport
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 30%', 'end start'] })
-  const fan = useSpring(scrollYProgress, { stiffness: 110, damping: 26, mass: 0.5 })
+  const { scrollYProgress } = useScroll({ target: ref, offset: [...t.fanOffset] })
+  const fan = useSpring(scrollYProgress, t.fan)
   const lift = useTransform(fan, [0, 1], [0, -70])
   const tiltBack = useTransform(fan, [0, 1], [0, 22])
   const swing = useTransform(fan, [0, 1], [0, -14])
@@ -107,9 +131,9 @@ function CardStack() {
 
   useEffect(() => {
     if (reduce || paused) return
-    const t = setTimeout(() => setFront((f) => (f + 1) % N), AUTOPLAY)
-    return () => clearTimeout(t)
-  }, [front, reduce, paused])
+    const id = setTimeout(() => setFront((f) => (f + 1) % N), t.autoplay)
+    return () => clearTimeout(id)
+  }, [front, reduce, paused, t.autoplay])
 
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
     if (reduce || e.pointerType === 'touch') return
@@ -137,7 +161,7 @@ function CardStack() {
         <motion.div style={reduce ? undefined : { rotateX: rotX, rotateY: rotY, transformStyle: 'preserve-3d' }} className="relative">
           <motion.div style={reduce ? undefined : { rotateX: tiltBack, rotateY: swing, y: lift, transformStyle: 'preserve-3d' }} className="relative aspect-[4/5]">
             {SHOWCASE.map((item, i) => (
-              <StackCard key={item.key} item={item} k={(i - front + N) % N} fan={fan} sheen={sheen} tint={tint} reduce={reduce} onPick={() => setFront(i)} />
+              <StackCard key={item.key} item={item} k={(i - front + N) % N} fan={fan} sheen={sheen} tint={tint} reduce={reduce} slotTransition={t.slot} onPick={() => setFront(i)} />
             ))}
           </motion.div>
         </motion.div>
@@ -147,7 +171,7 @@ function CardStack() {
       <div className="mx-auto mt-8 flex w-[86%] max-w-[460px] items-end justify-between gap-6 border-t border-line pt-5">
         <div className="min-w-0" aria-live="polite">
           <AnimatePresence mode="wait">
-            <motion.div key={cur.key} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.35 }}>
+            <motion.div key={cur.key} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: reduce ? 0 : t.caption }}>
               <p className="num text-[11px] font-semibold uppercase tracking-[0.22em] text-slate">
                 {String(front + 1).padStart(2, '0')} / {String(N).padStart(2, '0')}
                 <span className="mx-2 text-line-strong">—</span>
@@ -164,14 +188,16 @@ function CardStack() {
         </div>
       </div>
       <div className="mx-auto mt-4 h-px w-[86%] max-w-[460px] overflow-hidden bg-line">
-        {!reduce && <motion.div key={`${front}-${paused}`} className="h-full origin-left bg-ink" initial={{ scaleX: 0 }} animate={{ scaleX: paused ? 0 : 1 }} transition={{ duration: paused ? 0.2 : AUTOPLAY / 1000, ease: 'linear' }} />}
+        {!reduce && <motion.div key={`${front}-${paused}`} className="h-full origin-left bg-ink" initial={{ scaleX: 0 }} animate={{ scaleX: paused ? 0 : 1 }} transition={{ duration: paused ? 0.2 : t.autoplay / 1000, ease: 'linear' }} />}
       </div>
     </div>
   )
 }
 
 export default function Hero({ onExplore }: { onExplore: () => void }) {
-  const fade = (d: number) => ({ initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, transition: { duration: 1, delay: d, ease: [0.22, 1, 0.36, 1] as const } })
+  const t = useIsMobile() ? TIMING.mobile : TIMING.desktop
+  // d = stagger index; mobile uses shorter durations and tighter stagger
+  const fade = (d: number) => ({ initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, transition: { duration: t.enter.duration, delay: d * t.enter.step, ease: [0.22, 1, 0.36, 1] as const } })
   const variants = PRODUCTS.reduce((s, p) => s + p.variants.length, 0)
 
   const STATS = [
@@ -190,16 +216,16 @@ export default function Hero({ onExplore }: { onExplore: () => void }) {
         <div className="lg:col-span-6">
           <motion.p {...fade(0)} className="eyebrow"><span>Imported jewellery &amp; cosmetics<span className="hidden sm:inline"> · Wholesale</span></span></motion.p>
 
-          <motion.h1 {...fade(0.08)} className="display mt-8 text-[2.9rem] leading-[0.98] sm:text-[4.2rem] lg:text-[4.6rem] xl:text-[5.2rem]">
+          <motion.h1 {...fade(1)} className="display mt-8 text-[2.9rem] leading-[0.98] sm:text-[4.2rem] lg:text-[4.6rem] xl:text-[5.2rem]">
             Thailand &amp; Kashmir jewellery,{' '}
             <em className="font-light italic text-brand-800">wholesale by the lot.</em>
           </motion.h1>
 
-          <motion.p {...fade(0.16)} className="mt-8 max-w-[34rem] text-[17px] leading-[1.75] text-slate-600">
+          <motion.p {...fade(2)} className="mt-8 max-w-[34rem] text-[17px] leading-[1.75] text-slate-600">
             Bridal sets, antique jhumkas, waist chains and cosmetics — imported direct and supplied by the dozen and box to retailers, boutiques and bridal studios across Bangladesh.
           </motion.p>
 
-          <motion.div {...fade(0.24)} className="mt-11 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <motion.div {...fade(3)} className="mt-11 flex flex-col gap-3 sm:flex-row sm:items-center">
             <button onClick={onExplore} className="btn-dark group h-14 px-8">
               Explore wholesale catalog
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -209,13 +235,13 @@ export default function Hero({ onExplore }: { onExplore: () => void }) {
             </a>
           </motion.div>
 
-          <motion.p {...fade(0.32)} className="mt-8 text-[13px] text-slate">
+          <motion.p {...fade(4)} className="mt-8 text-[13px] text-slate">
             Trade buyers only · Minimum order quantities apply per item
           </motion.p>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} className="lg:col-span-6">
-          <CardStack />
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ...t.enter.stack, ease: [0.22, 1, 0.36, 1] }} className="lg:col-span-6">
+          <CardStack t={t} />
         </motion.div>
       </div>
 

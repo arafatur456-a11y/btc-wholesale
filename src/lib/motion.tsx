@@ -1,5 +1,19 @@
 import { motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
-import { useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+
+const MOBILE_QUERY = '(max-width: 767px)'
+
+/** True below the md breakpoint. Read synchronously on first render so initial timings are correct. */
+export function useIsMobile() {
+  const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_QUERY)
+    const on = () => setMobile(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return mobile
+}
 
 /** Shared spring for scroll-linked motion: settles smoothly without lagging the scroll. */
 export const SCROLL_SPRING = { stiffness: 120, damping: 28, mass: 0.4, restDelta: 0.0005 }
