@@ -1,7 +1,7 @@
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
 import { SearchX, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { CATEGORIES, PRODUCTS, type Product } from '../data/products'
+import { CATEGORIES, PRODUCTS, hasPhoto, type Product } from '../data/products'
 import type { Filters, SortKey } from '../lib/filters'
 import { DEFAULT_FILTERS } from '../lib/filters'
 import { basePrice, lowestPrice, waLink } from '../lib/pricing'
@@ -64,7 +64,8 @@ export default function Catalog({ filters, setFilters, showPrices, setShowPrices
       (!q || [p.name, p.sku, p.description, p.material, p.origin, ...p.variants.map((v) => v.name)].join(' ').toLowerCase().includes(q)),
     )
     const sorters: Record<SortKey, (a: Product, b: Product) => number> = {
-      featured: () => 0,
+      // real BTC photography leads; otherwise keep catalogue order (sort is stable)
+      featured: (a, b) => Number(hasPhoto(b)) - Number(hasPhoto(a)),
       'price-asc': (a, b) => lowestPrice(a) - lowestPrice(b),
       'price-desc': (a, b) => basePrice(b) - basePrice(a),
       'moq-asc': (a, b) => a.moq - b.moq,

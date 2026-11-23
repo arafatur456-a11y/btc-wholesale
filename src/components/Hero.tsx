@@ -3,14 +3,14 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { PRODUCTS } from '../data/products'
 import { waLink } from '../lib/pricing'
-import { WhatsAppIcon } from './ui'
+import { WhatsAppIcon, photoSrcSet } from './ui'
 import { useIsMobile } from '../lib/motion'
 
 const SHOWCASE = [
-  { key: 'bridal', title: 'Bridal Choker & Tikka Sets', origin: 'Kashmir', meta: 'From 3 sets per lot', img: '/products/mix-24.jpg' },
-  { key: 'kundan', title: 'Kundan V-Drop Necklace Sets', origin: 'Kashmir', meta: 'From ½ dozen sets', img: '/products/neck-05.jpg' },
-  { key: 'jhumka', title: 'Antique Stone Jhumkas', origin: 'Thailand', meta: 'From 2 dozen pairs', img: '/products/jhum-03.jpg' },
-  { key: 'waist', title: 'Gold Motif Waist Chains', origin: 'Thailand', meta: 'From 1 dozen', img: '/products/waist-0.jpg' },
+  { key: 'bridal', title: 'Bridal Choker & Tikka Sets', origin: 'Kashmir', meta: 'From 3 sets per lot', img: '/products/btc/bridal-choker-gold.jpg' },
+  { key: 'kundan', title: 'Kundan V-Drop Necklace Sets', origin: 'Kashmir', meta: 'From ½ dozen sets', img: '/products/btc/kundan-vdrop-ruby.jpg' },
+  { key: 'jhumka', title: 'Temple Crown Jhumkas', origin: 'Kashmir', meta: 'From 2 dozen pairs', img: '/products/btc/jhumka-temple-pink.jpg' },
+  { key: 'bangles', title: 'Hand-Painted Glass Bangles', origin: 'Thailand', meta: 'From 1 dozen sets', img: '/products/btc/glass-bangles-amber-stack.jpg' },
 ]
 const N = SHOWCASE.length
 
@@ -97,7 +97,7 @@ function StackCard({ item, k, fan, sheen, tint, reduce, slotTransition, lite, on
         {/* rim light: warm gold → brand cyan */}
         <span aria-hidden className="absolute inset-0 rounded-[28px] bg-[conic-gradient(from_210deg_at_50%_50%,#C9A23F,#F3E2A6_18%,#1ECAD3_38%,#0B6A70_55%,#C9A23F_75%,#E8D08A_90%,#C9A23F)] opacity-90" />
         <span className="relative block h-full w-full overflow-hidden rounded-[26.5px] bg-ink">
-          <img src={item.img} alt="" className="h-full w-full object-cover" draggable={false} />
+          <img src={item.img} srcSet={photoSrcSet(item.img)} sizes="(min-width: 1024px) 400px, 72vw" alt="" className="h-full w-full object-cover" draggable={false} />
           <span aria-hidden className="pointer-events-none absolute inset-2.5 rounded-[19px] ring-1 ring-white/15" />
           {!isFront && <span aria-hidden className="absolute inset-0 bg-ink/25" />}
           {isFront && !reduce && (

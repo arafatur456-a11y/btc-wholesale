@@ -42,7 +42,7 @@ export default function ProductCard({ product, showPrices, onQuickView, index, r
           <div className="flex h-full cursor-pointer flex-col rounded-[24px] bg-white p-2.5 shadow-card ring-1 ring-line transition-[box-shadow,transform] duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:-translate-y-1 group-hover:shadow-lift group-hover:ring-brand/50" onClick={open}>
             {/* media */}
             <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-ink">
-              <ProductImage product={product} variant={variant} className="transition-transform duration-[1.2s] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.05]" />
+              <ProductImage product={product} variant={variant} hoverAlt className="transition-[transform,opacity] duration-[1.2s] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.05]" />
               <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink/45 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 [@media(hover:none)]:opacity-100" />
 
               {/* frosted action bar (always visible on touch) */}

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { PRODUCTS, type Product } from '../data/products'
 import type { Filters } from '../lib/filters'
 import { formatBDT, lowestPrice } from '../lib/pricing'
-import { SectionHeading } from './ui'
+import { SectionHeading, photoSrcSet } from './ui'
 import { ScrollDepth } from '../lib/motion'
 
 interface Tab {
@@ -23,31 +23,31 @@ const TABS: Tab[] = [
     id: 'th', label: 'Thailand Imports', kicker: 'Origin · Thailand', title: 'Bangkok-sharp finish, fast-moving lots',
     body: 'AD stone collars, cat-eye jhumkas, waist chains and cosmetics imported from Thailand. Consistent plating, tight colour-matching across a dozen — ideal for daily-wear counters.',
     apply: { origin: 'Thailand' }, match: (p) => p.origin === 'Thailand',
-    images: ['/products/neck-01.jpg', '/products/jhum-22.jpg', '/products/waist-3.jpg', '/products/bead-3.jpg'],
+    images: ['/products/btc/jhumka-meenakari-turquoise.jpg', '/products/btc/clutch-mop-floral.jpg', '/products/btc/glass-bangles-amber-stack.jpg'],
   },
   {
     id: 'kr', label: 'Kashmir Imports', kicker: 'Origin · Kashmir', title: 'Artisan kundan, meena & antique craft',
     body: 'Heavier bridal and festive work from Kashmir: kundan V-drops, temple jhumkas, rani haars and textured kada bangles. Built for bridal parlours and premium showrooms.',
     apply: { origin: 'Kashmir' }, match: (p) => p.origin === 'Kashmir',
-    images: ['/products/neck-05.jpg', '/products/jhum-00.jpg', '/products/mix-22.jpg', '/products/mix-01.jpg'],
+    images: ['/products/btc/kundan-vdrop-ruby.jpg', '/products/btc/jhumka-temple-pink.jpg', '/products/btc/bridal-choker-green.jpg'],
   },
   {
     id: 'bridal', label: 'Bridal & Stone Sets', kicker: 'Collection', title: 'Bridal, party & stone necklace sets',
     body: 'Complete sets with earrings — and tikka on bridal kits. Sold by half-dozen or box of 3 for premium pieces. Request a quote for mixed-colour bridal assortments.',
     apply: { collection: 'bridal' }, match: (p) => p.collections.includes('bridal'),
-    images: ['/products/mix-24.jpg', '/products/neck-13.jpg', '/products/bead-0.jpg', '/products/neck-20.jpg'],
+    images: ['/products/btc/bridal-choker-gold.jpg', '/products/btc/bridal-bib-champagne.jpg', '/products/btc/kundan-vdrop-emerald.jpg'],
   },
   {
     id: 'jhumka', label: 'Jhumka Collection', kicker: 'Collection', title: 'Antique & stone jhumkas by the dozen',
     body: 'Our highest-velocity line. Card-packed pairs in 20+ stone colours, sold per dozen or 5-dozen box with deeper tier pricing past 120 pairs.',
     apply: { collection: 'jhumka' }, match: (p) => p.collections.includes('jhumka'),
-    images: ['/products/jhum-03.jpg', '/products/jhum-24.jpg', '/products/mix-31.jpg', '/products/jhum-15.jpg'],
+    images: ['/products/btc/jhumka-temple-red.jpg', '/products/btc/jhumka-peardrop-peach.jpg', '/products/btc/jhumka-temple-black.jpg'],
   },
   {
     id: 'waist', label: 'Waist Chains & Accessories', kicker: 'Collection', title: 'Kamarbandh, kada & evening clutches',
     body: 'Waist chains in five motifs, textured kada bangle sets, and mother-of-pearl and shell-charm clutches — great add-on margin for jewellery counters.',
     apply: { collection: 'accessories' }, match: (p) => p.collections.includes('accessories'),
-    images: ['/products/waist-0.jpg', '/products/mix-00.jpg', '/products/mix-04.jpg', '/products/mix-15.jpg'],
+    images: ['/products/btc/glass-bangles-pink.jpg', '/products/btc/kada-bangles.jpg', '/products/btc/minaudiere-oval.jpg'],
   },
 ]
 
@@ -141,7 +141,7 @@ export default function Collections({ onApply }: { onApply: (f: Partial<Filters>
                       transition={{ delay: 0.08 * i, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                       className="group relative h-full overflow-hidden rounded-[22px] bg-ink shadow-lift ring-1 ring-black/5"
                     >
-                      <img src={src} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.05]" />
+                      <img src={src} srcSet={photoSrcSet(src)} sizes={feature ? '(min-width: 1024px) 460px, 60vw' : '(min-width: 1024px) 300px, 40vw'} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.05]" />
                       {feature && (
                         <figcaption className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-2xl bg-white/90 py-2.5 pl-4 pr-2.5 backdrop-blur sm:inset-x-4 sm:bottom-4">
                           <span className="min-w-0">

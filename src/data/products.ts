@@ -8,7 +8,7 @@ export type Category = 'necklace' | 'earrings' | 'waist-bangles' | 'cosmetics'
 export type Origin = 'Thailand' | 'Kashmir'
 export type Collection = 'bridal' | 'jhumka' | 'waist' | 'accessories' | 'cosmetics'
 
-export interface Variant { id: string; name: string; swatch: string; image: string }
+export interface Variant { id: string; name: string; swatch: string; image: string; /** optional second photo of the same colourway */ alt?: string }
 export interface PackOption { label: string; units: number }
 export interface PriceTier { min: number; price: number }
 
@@ -39,7 +39,11 @@ export const CATEGORIES: { id: Category; label: string; short: string }[] = [
 ]
 
 const P = (f: string) => `/products/${f}.jpg`
-const v = (id: string, name: string, swatch: string, file: string): Variant => ({ id, name, swatch, image: P(file) })
+// `cos:<kind>` marks an illustrated cosmetics placeholder and must not become a file path
+const v = (id: string, name: string, swatch: string, file: string): Variant => ({ id, name, swatch, image: file.startsWith('cos:') ? file : P(file) })
+/** Real BTC product photography (public/products/btc). */
+const B = (id: string, name: string, swatch: string, slug: string, alt?: string): Variant => ({ id, name, swatch, image: `/products/btc/${slug}.jpg`, ...(alt ? { alt: `/products/btc/${alt}.jpg` } : {}) })
+export const hasPhoto = (p: Product) => p.variants.some((x) => x.image.startsWith('/products/btc/'))
 
 const DOZEN = { label: 'Dozen', units: 12 }
 const HALF = { label: 'Half Dozen', units: 6 }
@@ -52,7 +56,16 @@ export const PRODUCTS: Product[] = [
     material: 'Antique gold plating, kundan & glass stones',
     moq: 6, unitLabel: 'set', packs: [HALF, DOZEN], badge: 'Best Seller', stockLots: 14,
     tiers: [{ min: 6, price: 1250 }, { min: 24, price: 1140 }, { min: 60, price: 1050 }],
-    variants: [v('ruby', 'Ruby Red', '#B3122E', 'neck-05'), v('blush', 'Blush Pink', '#E7A2AE', 'neck-04'), v('emerald', 'Emerald', '#13704A', 'neck-10')],
+    variants: [B('ruby', 'Ruby Red', '#B3122E', 'kundan-vdrop-ruby'), B('blush', 'Blush Pink', '#E7A2AE', 'kundan-vdrop-blush'), B('emerald', 'Emerald', '#13704A', 'kundan-vdrop-emerald')],
+  },
+  {
+    id: 'emerald-peacock-necklace', sku: 'BTC-NK-1140', name: 'Emerald Peacock Double-Line Necklace Set',
+    category: 'necklace', collections: ['bridal'], origin: 'Kashmir',
+    description: 'Two-line stone chain with a hexagonal emerald peacock pendant and matching peacock drop earrings. Statement piece for party and bridal counters.',
+    material: 'Victorian antique finish, AD stones, emerald glass',
+    moq: 6, unitLabel: 'set', packs: [HALF, DOZEN], badge: 'New Lot', stockLots: 8,
+    tiers: [{ min: 6, price: 1350 }, { min: 24, price: 1250 }, { min: 60, price: 1160 }],
+    variants: [B('emerald', 'Emerald', '#13704A', 'emerald-peacock-necklace')],
   },
   {
     id: 'square-solitaire-collar', sku: 'BTC-NK-1018', name: 'Square Solitaire Collar Set',
@@ -124,7 +137,7 @@ export const PRODUCTS: Product[] = [
     material: 'Antique matte gold, kundan, glass pearls',
     moq: 3, unitLabel: 'set', packs: [{ label: 'Box of 3', units: 3 }, HALF], badge: 'Limited Lot', stockLots: 6, quoteOnly: true,
     tiers: [{ min: 3, price: 3150 }, { min: 12, price: 2900 }],
-    variants: [v('maroon', 'Maroon Pearl', '#6E1A26', 'mix-21'), v('green', 'Mehendi Green', '#2F5D3A', 'mix-22'), v('rose', 'Rose', '#A33A4D', 'mix-23'), v('gold', 'Pure Gold', '#C9A23F', 'mix-24')],
+    variants: [B('gold', 'Pure Gold', '#C9A23F', 'bridal-choker-gold'), B('maroon', 'Maroon Pearl', '#6E1A26', 'bridal-choker-maroon'), B('green', 'Mehendi Green', '#2F5D3A', 'bridal-choker-green')],
   },
   {
     id: 'antique-heavy-bridal', sku: 'BTC-BR-2024', name: 'Antique Heavy Bridal Bib Set',
@@ -133,7 +146,7 @@ export const PRODUCTS: Product[] = [
     material: 'Antique oxidised gold, kundan, pearl drops',
     moq: 2, unitLabel: 'set', packs: [{ label: 'Pair of sets', units: 2 }, { label: 'Box of 4', units: 4 }], stockLots: 4, quoteOnly: true,
     tiers: [{ min: 2, price: 4800 }, { min: 8, price: 4450 }],
-    variants: [v('antique', 'Antique Gold', '#A9874A', 'bead-5'), v('ruby', 'Ruby Pearl', '#8E1B2C', 'mix-30')],
+    variants: [B('champagne', 'Champagne Antique', '#CDB48A', 'bridal-bib-champagne'), B('wine', 'Wine', '#6E1A2E', 'bridal-bib-wine')],
   },
 
   // ---- Jhumkas & earrings
@@ -144,7 +157,7 @@ export const PRODUCTS: Product[] = [
     material: 'Oxidised alloy, cat-eye stone, ghungroo beads',
     moq: 24, unitLabel: 'pair', packs: [DOZEN, { label: 'Box (5 dz)', units: 60 }], badge: 'Best Seller', stockLots: 40,
     tiers: [{ min: 24, price: 185 }, { min: 120, price: 165 }, { min: 300, price: 148 }],
-    variants: [v('turq', 'Turquoise', '#2BC3C9', 'jhum-03'), v('peach', 'Peach', '#E49A6B', 'jhum-25'), v('black', 'Onyx', '#1E1E1E', 'jhum-23'), v('ruby', 'Ruby', '#A3122B', 'jhum-24'), v('honey', 'Honey', '#B47A3E', 'jhum-12')],
+    variants: [B('turq', 'Turquoise', '#2BC3C9', 'jhumka-meenakari-turquoise')],
   },
   {
     id: 'twin-drop-jhumka', sku: 'BTC-JH-3014', name: 'Twin-Drop Cat-Eye Jhumka',
@@ -162,7 +175,7 @@ export const PRODUCTS: Product[] = [
     material: 'Antique gold alloy, meena enamel',
     moq: 24, unitLabel: 'pair', packs: [DOZEN, { label: 'Box (5 dz)', units: 60 }], stockLots: 26,
     tiers: [{ min: 24, price: 210 }, { min: 120, price: 190 }, { min: 300, price: 172 }],
-    variants: [v('multi', 'Multicolour', '#C04A5E', 'jhum-00'), v('red', 'Sindoor Red', '#C21F32', 'jhum-01'), v('black', 'Black Meena', '#2A2A2A', 'jhum-02'), v('pink', 'Rani Pink', '#D0517A', 'jhum-04')],
+    variants: [B('red', 'Sindoor Red', '#C21F32', 'jhumka-temple-red'), B('pink', 'Rani Pink', '#D0517A', 'jhumka-temple-pink'), B('lilac', 'Lilac', '#9B6FA8', 'jhumka-temple-lilac'), B('black', 'Black Meena', '#2A2A2A', 'jhumka-temple-black')],
   },
   {
     id: 'drop-stone-jhumka', sku: 'BTC-JH-3035', name: 'Pear-Drop Stone Jhumka',
@@ -171,7 +184,7 @@ export const PRODUCTS: Product[] = [
     material: 'Oxidised alloy, glass stone',
     moq: 24, unitLabel: 'pair', packs: [DOZEN, { label: 'Box (5 dz)', units: 60 }], badge: 'New Lot', stockLots: 20,
     tiers: [{ min: 24, price: 175 }, { min: 120, price: 158 }, { min: 300, price: 142 }],
-    variants: [v('olive', 'Olive', '#55603A', 'jhum-05'), v('turq', 'Turquoise', '#2BC3C9', 'jhum-22'), v('beige', 'Beige', '#CFB08A', 'jhum-21'), v('emerald', 'Bottle Green', '#244A35', 'jhum-31')],
+    variants: [B('peach', 'Peach', '#E8B9A0', 'jhumka-peardrop-peach'), B('olive', 'Smoky Olive', '#55603A', 'jhumka-peardrop-olive')],
   },
   {
     id: 'mirror-kundan-earring', sku: 'BTC-ER-3110', name: 'Kundan Square Statement Earring',
@@ -200,7 +213,16 @@ export const PRODUCTS: Product[] = [
     material: 'Copper-tone alloy, textured micro-bead finish',
     moq: 12, unitLabel: 'set', packs: [DOZEN, { label: 'Box (3 dz)', units: 36 }], badge: 'Fast Moving', stockLots: 19,
     tiers: [{ min: 12, price: 420 }, { min: 48, price: 385 }, { min: 144, price: 355 }],
-    variants: [v('copper', 'Rose Copper', '#B9734F', 'mix-00'), v('antique', 'Antique Copper', '#9C5E3B', 'mix-01'), v('gold', 'Matte Gold', '#B98A3E', 'mix-02')],
+    variants: [B('antique', 'Antique Gold', '#A9874A', 'kada-bangles')],
+  },
+  {
+    id: 'painted-glass-bangles', sku: 'BTC-BG-4125', name: 'Hand-Painted Glass Bangle Set (4 pcs)',
+    category: 'waist-bangles', collections: ['accessories'], origin: 'Thailand',
+    description: 'Translucent glass bangles hand-painted with floral and paisley meena work. Sold as matched sets of four; mix colours across a dozen.',
+    material: 'Tinted glass, hand-painted enamel, gold detailing',
+    moq: 12, unitLabel: 'set', packs: [DOZEN, { label: 'Box (3 dz)', units: 36 }], badge: 'New Lot', stockLots: 20,
+    tiers: [{ min: 12, price: 180 }, { min: 48, price: 160 }, { min: 144, price: 145 }],
+    variants: [B('pink', 'Rani Pink', '#D6337A', 'glass-bangles-pink', 'glass-bangles-pink-stack'), B('green', 'Bottle Green', '#1F6B3A', 'glass-bangles-green', 'glass-bangles-green-stack'), B('amber', 'Amber', '#C97A1E', 'glass-bangles-amber', 'glass-bangles-amber-stack'), B('multi', 'Multicolour', '#3A2A4A', 'glass-bangles-multi')],
   },
   {
     id: 'mother-of-pearl-clutch', sku: 'BTC-AC-5004', name: 'Mother-of-Pearl Stone Clutch',
@@ -209,7 +231,7 @@ export const PRODUCTS: Product[] = [
     material: 'Metal frame, MOP shell inlay, stones',
     moq: 6, unitLabel: 'pc', packs: [HALF, DOZEN], badge: 'Limited Lot', stockLots: 7,
     tiers: [{ min: 6, price: 1650 }, { min: 24, price: 1520 }],
-    variants: [v('pearl', 'Pearl White', '#EDE7DC', 'mix-04'), v('ocean', 'Ocean Blue', '#6FA9C9', 'mix-05'), v('round', 'Round Ocean', '#5C93B5', 'mix-03'), v('floral', 'Floral Inlay', '#D8CFC0', 'mix-10')],
+    variants: [B('floral', 'Floral Inlay', '#E3DACB', 'clutch-mop-floral'), B('round', 'Round Ocean', '#5C93B5', 'clutch-mop-round')],
   },
   {
     id: 'gold-shell-potli', sku: 'BTC-AC-5016', name: 'Golden Shell-Charm Minaudière',
@@ -218,7 +240,7 @@ export const PRODUCTS: Product[] = [
     material: 'Gold wire-work, stone cluster, cowrie shells',
     moq: 6, unitLabel: 'pc', packs: [HALF, DOZEN], stockLots: 8, quoteOnly: true,
     tiers: [{ min: 6, price: 1880 }, { min: 24, price: 1740 }],
-    variants: [v('oval', 'Oval', '#C9A23F', 'mix-15'), v('drop', 'Teardrop', '#C9A23F', 'mix-12'), v('triangle', 'Triangle', '#C9A23F', 'mix-14'), v('pouch', 'Pouch', '#C9A23F', 'mix-13')],
+    variants: [B('oval', 'Oval', '#C9A23F', 'minaudiere-oval'), B('triangle', 'Triangle', '#C9A23F', 'minaudiere-triangle')],
   },
   {
     id: 'kundan-mirror-purse', sku: 'BTC-AC-5021', name: 'Kundan Mirror Half-Moon Purse',

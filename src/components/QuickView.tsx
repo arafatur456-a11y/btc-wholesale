@@ -12,6 +12,8 @@ interface Props { product: Product | null; initialVariant?: string; showPrices: 
 function Body({ product, initialVariant, showPrices, onClose }: Props & { product: Product }) {
   const { add, setOpen } = useCart()
   const [vid, setVid] = useState(initialVariant ?? product.variants[0].id)
+  const [showAlt, setShowAlt] = useState(false)
+  const pick = (id: string, alt = false) => { setVid(id); setShowAlt(alt) }
   const [packIdx, setPackIdx] = useState(0)
   const pack = product.packs[packIdx]
   const minPacks = Math.ceil(product.moq / pack.units)
@@ -46,18 +48,27 @@ function Body({ product, initialVariant, showPrices, onClose }: Props & { produc
       <div className="relative bg-ink md:h-full">
         <div className="relative aspect-square md:aspect-auto md:h-[calc(100%-92px)]">
           <AnimatePresence mode="wait">
-            <motion.div key={variant.id} initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="absolute inset-0">
-              <ProductImage product={product} variant={variant} eager className="h-full w-full" />
+            <motion.div key={`${variant.id}-${showAlt}`} initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="absolute inset-0 overflow-hidden">
+              {/* blurred fill behind, full uncropped photo in front so wide sets keep their earrings in frame */}
+              <div aria-hidden className="absolute inset-0 scale-110 opacity-50 blur-2xl">
+                <ProductImage product={product} variant={variant} showAlt={showAlt} sizes="64px" className="h-full w-full" />
+              </div>
+              <div className="absolute inset-0">
+                <ProductImage product={product} variant={variant} showAlt={showAlt} eager sizes="(min-width: 768px) 560px, 100vw" className="h-full w-full !object-contain" />
+              </div>
             </motion.div>
           </AnimatePresence>
           <div className="absolute left-4 top-4"><OriginBadge origin={product.origin} size="md" tone="glass" /></div>
         </div>
         <div className="flex gap-2 overflow-x-auto bg-ink p-3 [scrollbar-width:thin]">
-          {product.variants.map((v) => (
-            <button key={v.id} onClick={() => setVid(v.id)} aria-label={v.name} aria-pressed={v.id === vid} className={`h-[68px] w-[68px] shrink-0 overflow-hidden rounded-xl ring-2 transition ${v.id === vid ? 'ring-brand' : 'ring-transparent opacity-70 hover:opacity-100'}`}>
-              <ProductImage product={product} variant={v} className="h-full w-full" />
-            </button>
-          ))}
+          {product.variants.flatMap((v) => [false, ...(v.alt ? [true] : [])].map((alt) => {
+            const on = v.id === vid && showAlt === alt
+            return (
+              <button key={`${v.id}-${alt}`} onClick={() => pick(v.id, alt)} aria-label={alt ? `${v.name}, second photo` : v.name} aria-pressed={on} className={`relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-xl ring-2 transition ${on ? 'ring-brand' : 'ring-transparent opacity-70 hover:opacity-100'}`}>
+                <ProductImage product={product} variant={v} showAlt={alt} sizes="68px" className="h-full w-full" />
+              </button>
+            )
+          }))}
         </div>
       </div>
 
@@ -79,7 +90,7 @@ function Body({ product, initialVariant, showPrices, onClose }: Props & { produc
             <p className="text-xs font-bold uppercase tracking-wider text-ink">Colour · <span className="font-semibold normal-case tracking-normal text-slate-600">{variant.name}</span></p>
             <div className="mt-2.5 flex flex-wrap gap-2">
               {product.variants.map((v) => (
-                <button key={v.id} onClick={() => setVid(v.id)} aria-pressed={v.id === vid} className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${v.id === vid ? 'border-ink bg-ink text-white' : 'border-ink/15 text-ink hover:border-ink/40'}`}>
+                <button key={v.id} onClick={() => pick(v.id)} aria-pressed={v.id === vid} className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${v.id === vid ? 'border-ink bg-ink text-white' : 'border-ink/15 text-ink hover:border-ink/40'}`}>
                   <span className="h-3.5 w-3.5 rounded-full ring-1 ring-white/40" style={{ background: v.swatch }} />{v.name}
                 </button>
               ))}

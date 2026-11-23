@@ -20,11 +20,16 @@ npm run build    # production build in dist/
 | Sections | `src/components/*` (Header, Hero, Collections, Catalog, ProductCard, QuickView, HowItWorks, CartDrawer, Footer) |
 | Brand colours, hairline tokens & fonts (Fraunces + Plus Jakarta Sans) | `tailwind.config.js`, `src/index.css`, `index.html` |
 
-## Swapping in real photos
+## Product photos
 
-Product images are crops from the Facebook catalogue screenshots (`public/products/*.jpg`, ~180px originals upscaled).
-Replace them with full-resolution photos (square, 1000px+ recommended) and update each variant's `image` path.
-Cosmetics use illustrated placeholders (`image: 'cos:lip'` etc.) — change those to `/products/your-photo.jpg`.
+Real BTC photography lives in `public/products/btc/`, two widths per photo: `name.jpg` (1200px, quick view)
+and `name-sm.jpg` (640px, cards). The browser picks via `srcset`. Photos are rotated upright and stripped of
+camera metadata (EXIF/GPS) on export.
+
+In `src/data/products.ts`, `B('id', 'Colour', '#swatch', 'slug', 'optional-second-photo-slug')` uses a real photo;
+the optional second photo crossfades in on card hover and appears as an extra quick-view thumbnail.
+Products still on older low-res crops use `v(...)` with files in `public/products/`. Cosmetics use
+illustrated placeholders (`'cos:lip'` etc.) until real photos are added. "Featured" sort lists real-photo products first.
 
 ## Order flow
 

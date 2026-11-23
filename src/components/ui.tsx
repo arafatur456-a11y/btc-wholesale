@@ -75,7 +75,26 @@ function CosmeticArt({ kind, color, name }: { kind: string; color: string; name:
   )
 }
 
-export function ProductImage({ product, variant, className = '', eager = false }: { product: Product; variant: Variant; className?: string; eager?: boolean }) {
+/** Real BTC photos ship in two widths (`name-sm.jpg` 640w, `name.jpg` 1200w); let the browser pick. */
+export function photoSrcSet(src: string) {
+  return src.startsWith('/products/btc/') ? `${src.replace(/\.jpg$/, '-sm.jpg')} 640w, ${src} 1200w` : undefined
+}
+
+const CARD_SIZES = '(min-width: 1280px) 300px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 92vw'
+
+interface ImgProps {
+  product: Product
+  variant: Variant
+  className?: string
+  eager?: boolean
+  sizes?: string
+  /** show the variant's second photo instead of its main one */
+  showAlt?: boolean
+  /** crossfade to the variant's second photo on hover (parent must be `relative` and have the `group` class) */
+  hoverAlt?: boolean
+}
+
+export function ProductImage({ product, variant, className = '', eager = false, sizes = CARD_SIZES, showAlt = false, hoverAlt = false }: ImgProps) {
   if (variant.image.startsWith('cos:')) {
     return (
       <div className={`relative overflow-hidden ${className}`}>
@@ -83,15 +102,34 @@ export function ProductImage({ product, variant, className = '', eager = false }
       </div>
     )
   }
+  const src = showAlt && variant.alt ? variant.alt : variant.image
+  const label = `${product.name} — ${variant.name}`
   return (
-    <img
-      src={variant.image}
-      alt={`${product.name} — ${variant.name}`}
-      loading={eager ? 'eager' : 'lazy'}
-      decoding="async"
-      className={`h-full w-full object-cover ${className}`}
-      draggable={false}
-    />
+    <>
+      <img
+        src={src}
+        srcSet={photoSrcSet(src)}
+        sizes={sizes}
+        alt={showAlt ? `${label}, alternate view` : label}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        className={`h-full w-full object-cover ${className}`}
+        draggable={false}
+      />
+      {hoverAlt && variant.alt && (
+        <img
+          src={variant.alt}
+          srcSet={photoSrcSet(variant.alt)}
+          sizes={sizes}
+          alt=""
+          aria-hidden
+          loading="lazy"
+          decoding="async"
+          className={`absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100 ${className}`}
+          draggable={false}
+        />
+      )}
+    </>
   )
 }
 
