@@ -14,25 +14,33 @@ const SHOWCASE = [
 ]
 const N = SHOWCASE.length
 
-/** Desktop keeps the slow, luxury pacing; below md everything is tighter and snappier. */
+/**
+ * Desktop keeps the slow, luxury pacing. Mobile (<768px) starts promptly and moves on a
+ * duration-based spring with almost no bounce: quick to respond, but eased in and out so it
+ * glides instead of snapping. Scroll-linked motion is over-damped so touch-scroll jitter is absorbed.
+ */
 const TIMING = {
   desktop: {
     autoplay: 5200,
+    firstAutoplay: 5200,
     slot: { type: 'spring' as const, stiffness: 60, damping: 17, mass: 1 },
     fan: { stiffness: 110, damping: 26, mass: 0.5 },
     fanOffset: ['start 30%', 'end start'] as const,
     tilt: { stiffness: 80, damping: 18, mass: 0.9 },
-    caption: 0.35,
+    caption: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const },
     enter: { duration: 1, step: 0.08, stack: { duration: 1.2, delay: 0.2 } },
+    lite: false,
   },
   mobile: {
-    autoplay: 2600,
-    slot: { type: 'spring' as const, stiffness: 240, damping: 26, mass: 0.6 },
-    fan: { stiffness: 300, damping: 34, mass: 0.25 },
-    fanOffset: ['start 75%', 'center start'] as const,
-    tilt: { stiffness: 200, damping: 24, mass: 0.5 },
-    caption: 0.16,
-    enter: { duration: 0.45, step: 0.04, stack: { duration: 0.5, delay: 0.05 } },
+    autoplay: 3800,
+    firstAutoplay: 2400, // first card change comes sooner, so the showcase feels alive right away
+    slot: { type: 'spring' as const, visualDuration: 0.62, bounce: 0.06 },
+    fan: { stiffness: 90, damping: 24, mass: 0.6, restDelta: 0.0005 },
+    fanOffset: ['start 85%', 'end start'] as const,
+    tilt: { stiffness: 80, damping: 18, mass: 0.9 },
+    caption: { duration: 0.32, ease: [0.25, 0.1, 0.25, 1] as const },
+    enter: { duration: 0.6, step: 0.05, stack: { duration: 0.7, delay: 0.08 } },
+    lite: true, // skip pointer-only sheen and the animated blur glow: fewer layers to paint per frame
   },
 }
 type Timing = (typeof TIMING)['desktop'] | (typeof TIMING)['mobile']
@@ -53,11 +61,12 @@ interface CardProps {
   tint: MotionValue<string>
   reduce: boolean
   slotTransition: Timing['slot']
+  lite: boolean
   onPick: () => void
 }
 
 /** One card: outer layer = scroll-linked fan-out, inner layer = carousel slot spring. */
-function StackCard({ item, k, fan, sheen, tint, reduce, slotTransition, onPick }: CardProps) {
+function StackCard({ item, k, fan, sheen, tint, reduce, slotTransition, lite, onPick }: CardProps) {
   const isFront = k === 0
   const depthIdx = Math.min(k, 2)
   // as the hero scrolls away, the stack spreads apart in 3D: back cards swing out further
@@ -71,7 +80,7 @@ function StackCard({ item, k, fan, sheen, tint, reduce, slotTransition, onPick }
   return (
     <motion.div
       className="absolute inset-0"
-      style={reduce ? { zIndex: 10 - k } : { x: fx, y: fy, z: fz, rotateZ: fr, rotateY: fry, zIndex: 10 - k, transformStyle: 'preserve-3d' }}
+      style={reduce ? { zIndex: 10 - k } : { x: fx, y: fy, z: fz, rotateZ: fr, rotateY: fry, zIndex: 10 - k, transformStyle: 'preserve-3d', willChange: 'transform' }}
     >
       <motion.button
         type="button"
@@ -82,8 +91,8 @@ function StackCard({ item, k, fan, sheen, tint, reduce, slotTransition, onPick }
         initial={false}
         animate={{ x: slot.x, y: slot.y, z: slot.z, rotate: slot.rotate, scale: slot.scale, opacity: slot.opacity }}
         transition={reduce ? { duration: 0 } : slotTransition}
-        style={{ transformStyle: 'preserve-3d', transformOrigin: '50% 100%' }}
-        className="absolute inset-0 cursor-pointer rounded-[28px] p-[1.5px] shadow-frame"
+        style={{ transformStyle: 'preserve-3d', transformOrigin: '50% 100%', willChange: 'transform, opacity' }}
+        className={`absolute inset-0 cursor-pointer rounded-[28px] p-[1.5px] ${lite ? 'shadow-lift' : 'shadow-frame'}`}
       >
         {/* rim light: warm gold → brand cyan */}
         <span aria-hidden className="absolute inset-0 rounded-[28px] bg-[conic-gradient(from_210deg_at_50%_50%,#C9A23F,#F3E2A6_18%,#1ECAD3_38%,#0B6A70_55%,#C9A23F_75%,#E8D08A_90%,#C9A23F)] opacity-90" />
@@ -93,8 +102,8 @@ function StackCard({ item, k, fan, sheen, tint, reduce, slotTransition, onPick }
           {!isFront && <span aria-hidden className="absolute inset-0 bg-ink/25" />}
           {isFront && !reduce && (
             <>
-              <motion.span aria-hidden style={{ background: sheen }} className="pointer-events-none absolute inset-0 mix-blend-soft-light" />
-              <motion.span aria-hidden style={{ background: tint }} className="pointer-events-none absolute inset-0 mix-blend-overlay" />
+              {!lite && <motion.span aria-hidden style={{ background: sheen }} className="pointer-events-none absolute inset-0 mix-blend-soft-light" />}
+              <motion.span aria-hidden style={{ background: tint }} className={`pointer-events-none absolute inset-0 ${lite ? 'opacity-70' : 'mix-blend-overlay'}`} />
               <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
                 <span className="absolute inset-y-0 -left-1/2 w-1/3 animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
               </span>
@@ -110,7 +119,9 @@ function CardStack({ t }: { t: Timing }) {
   const reduce = !!useReducedMotion()
   const [front, setFront] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [advanced, setAdvanced] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const swipe = useRef<{ x: number; y: number } | null>(null)
 
   const mx = useMotionValue(0.5)
   const my = useMotionValue(0.5)
@@ -131,9 +142,10 @@ function CardStack({ t }: { t: Timing }) {
 
   useEffect(() => {
     if (reduce || paused) return
-    const id = setTimeout(() => setFront((f) => (f + 1) % N), t.autoplay)
+    const id = setTimeout(() => { setFront((f) => (f + 1) % N); setAdvanced(true) }, advanced ? t.autoplay : t.firstAutoplay)
     return () => clearTimeout(id)
-  }, [front, reduce, paused, t.autoplay])
+  }, [front, reduce, paused, advanced, t.autoplay, t.firstAutoplay])
+  const delay = advanced ? t.autoplay : t.firstAutoplay
 
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
     if (reduce || e.pointerType === 'touch') return
@@ -141,7 +153,7 @@ function CardStack({ t }: { t: Timing }) {
     mx.set((e.clientX - r.left) / r.width)
     my.set((e.clientY - r.top) / r.height)
   }
-  const go = (d: number) => setFront((f) => (f + d + N) % N)
+  const go = (d: number) => { setAdvanced(true); setFront((f) => (f + d + N) % N) }
   const cur = SHOWCASE[front]
 
   return (
@@ -149,19 +161,30 @@ function CardStack({ t }: { t: Timing }) {
       <div
         ref={ref}
         onPointerMove={onMove}
-        onPointerEnter={() => setPaused(true)}
-        onPointerLeave={() => { mx.set(0.5); my.set(0.5); setPaused(false) }}
+        // hover-pause is for mouse only: on touch, a tap fires enter+leave and would restart the timer
+        onPointerEnter={(e) => e.pointerType === 'mouse' && setPaused(true)}
+        onPointerLeave={(e) => { mx.set(0.5); my.set(0.5); if (e.pointerType === 'mouse') setPaused(false) }}
+        // horizontal swipe on touch: responds immediately with the same cushioned spring
+        onPointerDown={(e) => { if (e.pointerType !== 'mouse') swipe.current = { x: e.clientX, y: e.clientY } }}
+        onPointerUp={(e) => {
+          const st = swipe.current; swipe.current = null
+          if (!st) return
+          const dx = e.clientX - st.x, dy = e.clientY - st.y
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1)
+        }}
+        onPointerCancel={() => { swipe.current = null }}
         className="relative mx-auto w-[72%] max-w-[400px] -translate-x-[8%] pb-[6%] pt-[8%]"
-        style={{ perspective: 1600 }}
+        style={{ perspective: 1600, touchAction: 'pan-y' }}
         aria-roledescription="carousel"
         aria-label="Featured wholesale collections"
       >
         {/* floor glow that shifts gold → cyan with scroll */}
-        {!reduce && <motion.div aria-hidden style={{ background: floor }} className="absolute -bottom-[2%] left-[5%] h-[18%] w-[110%] blur-2xl" />}
+        {!reduce && !t.lite && <motion.div aria-hidden style={{ background: floor }} className="absolute -bottom-[2%] left-[5%] h-[18%] w-[110%] blur-2xl" />}
+        {!reduce && t.lite && <div aria-hidden className="absolute -bottom-[2%] left-[5%] h-[18%] w-[110%] bg-[radial-gradient(closest-side,rgba(30,202,211,0.28),transparent)]" />}
         <motion.div style={reduce ? undefined : { rotateX: rotX, rotateY: rotY, transformStyle: 'preserve-3d' }} className="relative">
           <motion.div style={reduce ? undefined : { rotateX: tiltBack, rotateY: swing, y: lift, transformStyle: 'preserve-3d' }} className="relative aspect-[4/5]">
             {SHOWCASE.map((item, i) => (
-              <StackCard key={item.key} item={item} k={(i - front + N) % N} fan={fan} sheen={sheen} tint={tint} reduce={reduce} slotTransition={t.slot} onPick={() => setFront(i)} />
+              <StackCard key={item.key} item={item} k={(i - front + N) % N} fan={fan} sheen={sheen} tint={tint} reduce={reduce} slotTransition={t.slot} lite={t.lite} onPick={() => { setAdvanced(true); setFront(i) }} />
             ))}
           </motion.div>
         </motion.div>
@@ -171,7 +194,7 @@ function CardStack({ t }: { t: Timing }) {
       <div className="mx-auto mt-8 flex w-[86%] max-w-[460px] items-end justify-between gap-6 border-t border-line pt-5">
         <div className="min-w-0" aria-live="polite">
           <AnimatePresence mode="wait">
-            <motion.div key={cur.key} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: reduce ? 0 : t.caption }}>
+            <motion.div key={cur.key} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={reduce ? { duration: 0 } : t.caption}>
               <p className="num text-[11px] font-semibold uppercase tracking-[0.22em] text-slate">
                 {String(front + 1).padStart(2, '0')} / {String(N).padStart(2, '0')}
                 <span className="mx-2 text-line-strong">—</span>
@@ -188,7 +211,7 @@ function CardStack({ t }: { t: Timing }) {
         </div>
       </div>
       <div className="mx-auto mt-4 h-px w-[86%] max-w-[460px] overflow-hidden bg-line">
-        {!reduce && <motion.div key={`${front}-${paused}`} className="h-full origin-left bg-ink" initial={{ scaleX: 0 }} animate={{ scaleX: paused ? 0 : 1 }} transition={{ duration: paused ? 0.2 : t.autoplay / 1000, ease: 'linear' }} />}
+        {!reduce && <motion.div key={`${front}-${paused}`} className="h-full origin-left bg-ink" initial={{ scaleX: 0 }} animate={{ scaleX: paused ? 0 : 1 }} transition={{ duration: paused ? 0.2 : delay / 1000, ease: 'linear' }} />}
       </div>
     </div>
   )
