@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion'
-import { Check, Eye, Package, Plus } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 import { useState } from 'react'
 import type { Product } from '../data/products'
 import { useCart } from '../context/CartContext'
-import { basePrice, formatBDT, lowestPrice } from '../lib/pricing'
-import { OriginBadge, ProductImage, StatusBadge, Tilt } from './ui'
+import { formatBDT, lowestPrice } from '../lib/pricing'
+import { ProductImage, Tilt } from './ui'
 
 interface Props { product: Product; showPrices: boolean; onQuickView: (p: Product, variantId: string) => void; index: number }
 
@@ -15,104 +15,86 @@ export default function ProductCard({ product, showPrices, onQuickView, index }:
   const variant = product.variants.find((v) => v.id === vid) ?? product.variants[0]
   const pack = product.packs[0]
   const moqPacks = Math.ceil(product.moq / pack.units)
+  const moqQty = moqPacks * pack.units
   const priced = showPrices && !product.quoteOnly
+  const open = () => onQuickView(product, variant.id)
 
   const quickAdd = () => {
-    add(product, variant.id, pack.label, pack.units, moqPacks * pack.units)
+    add(product, variant.id, pack.label, pack.units, moqQty)
     setAdded(true)
-    setTimeout(() => setAdded(false), 1400)
+    setTimeout(() => setAdded(false), 1600)
   }
 
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96 }}
+      exit={{ opacity: 0, transition: { duration: 0.2 } }}
       viewport={{ once: true, amount: 'some' }}
-      transition={{ duration: 0.5, delay: (index % 4) * 0.05, ease: [0.22, 1, 0.36, 1] }}
-      className="h-full"
+      transition={{ duration: 0.9, delay: (index % 4) * 0.07, ease: [0.22, 1, 0.36, 1] }}
+      className="group flex h-full flex-col"
     >
-      <Tilt className="group h-full">
-        <div className="flex h-full flex-col overflow-hidden rounded-[22px] bg-white shadow-card ring-1 ring-ink/[0.06] transition-shadow duration-300 group-hover:shadow-lift">
-          {/* media */}
-          <div className="relative aspect-square overflow-hidden bg-ink">
-            <button onClick={() => onQuickView(product, variant.id)} className="block h-full w-full" aria-label={`Quick view ${product.name}`}>
-              <ProductImage product={product} variant={variant} className="transition-transform duration-700 ease-out group-hover:scale-[1.05]" />
+      {/* media */}
+      <Tilt className="rounded-[20px]">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[20px] bg-ink ring-1 ring-black/5">
+          <button onClick={open} className="block h-full w-full" aria-label={`Quick view ${product.name}`}>
+            <ProductImage product={product} variant={variant} className="transition-transform duration-[1.2s] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]" />
+          </button>
+
+          {/* hover / focus actions (always visible on touch) */}
+          <div className="absolute inset-x-3 bottom-3 flex gap-2 translate-y-3 opacity-0 transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:opacity-100">
+            <button onClick={open} className="h-11 flex-1 rounded-full bg-white/95 text-[13px] font-semibold text-ink backdrop-blur transition-colors hover:bg-white">
+              Quick view
             </button>
-            <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2" style={{ transform: 'translateZ(30px)' }}>
-              <OriginBadge origin={product.origin} />
-              {product.badge && <StatusBadge label={product.badge} />}
-            </div>
-
-            {/* hover reveal: MOQ + pack + quick view */}
-            <div className="absolute inset-x-3 bottom-3 translate-y-[calc(100%+12px)] transition-transform duration-300 ease-out group-hover:translate-y-0 group-focus-within:translate-y-0 [@media(hover:none)]:hidden">
-              <div className="flex items-center gap-2 rounded-2xl bg-white/95 p-2 pl-3 shadow-lift ring-1 ring-ink/5 backdrop-blur">
-                <div className="min-w-0 flex-1 text-[11.5px] leading-tight">
-                  <p className="num font-bold text-ink">MOQ {product.moq} {product.unitLabel}s</p>
-                  <p className="truncate text-slate">Packed by {product.packs.map((p) => p.label.toLowerCase()).join(' / ')}</p>
-                </div>
-                <button onClick={() => onQuickView(product, variant.id)} className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-2 text-xs font-semibold text-white hover:bg-ink-3">
-                  <Eye className="h-3.5 w-3.5" /> Quick view
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* body */}
-          <div className="flex flex-1 flex-col p-4">
-            <div className="flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate">
-              <span className="num">{product.sku}</span>
-              <span className="num inline-flex items-center gap-1 normal-case tracking-normal"><Package className="h-3 w-3" />MOQ {product.moq}</span>
-            </div>
-            <h3 className="mt-1.5 line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-[1.3] text-ink">
-              <button onClick={() => onQuickView(product, variant.id)} className="text-left hover:text-brand-800">{product.name}</button>
-            </h3>
-
-            <div className="mt-3 flex min-h-[24px] items-center gap-1.5" role="radiogroup" aria-label="Colour">
-              {product.variants.slice(0, 5).map((v) => (
-                <button
-                  key={v.id}
-                  role="radio"
-                  aria-checked={v.id === vid}
-                  aria-label={v.name}
-                  title={v.name}
-                  onClick={() => setVid(v.id)}
-                  className={`h-6 w-6 rounded-full ring-offset-2 transition ${v.id === vid ? 'ring-2 ring-ink' : 'ring-1 ring-ink/15 hover:ring-ink/40'}`}
-                  style={{ background: v.swatch }}
-                />
-              ))}
-              <span className="ml-1 truncate text-xs text-slate">{variant.name}</span>
-            </div>
-
-            <div className="mt-auto pt-4">
-              <div className="flex items-end justify-between gap-2 border-t border-dashed border-ink/10 pt-3">
-                {priced ? (
-                  <div>
-                    <p className="text-[11px] font-semibold text-slate">Wholesale / {product.unitLabel}</p>
-                    <p className="num text-lg font-extrabold leading-tight text-ink">
-                      {formatBDT(lowestPrice(product))}<span className="text-sm font-semibold text-slate"> – {formatBDT(basePrice(product))}</span>
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-[11px] font-semibold text-slate">{product.quoteOnly ? 'Bridal / premium lot' : 'Trade price'}</p>
-                    <p className="text-[15px] font-extrabold leading-tight text-gold-dark">Request wholesale quote</p>
-                  </div>
-                )}
-                <motion.button
-                  whileTap={{ scale: 0.94 }}
-                  onClick={quickAdd}
-                  aria-label={`Add MOQ of ${product.name} to bulk bag`}
-                  className={`num inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-3.5 text-xs font-bold transition-colors ${added ? 'bg-ink text-white' : 'bg-brand text-ink hover:bg-brand-600'}`}
-                >
-                  {added ? <><Check className="h-4 w-4" />Added</> : <><Plus className="h-4 w-4" />{moqPacks} {moqPacks > 1 ? `× ${pack.units}` : pack.label}</>}
-                </motion.button>
-              </div>
-            </div>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={quickAdd}
+              aria-label={`Add minimum order of ${product.name} (${moqQty} ${product.unitLabel}s) to bulk bag`}
+              className={`num inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold transition-colors ${added ? 'bg-ink text-white' : 'bg-brand text-ink hover:bg-brand-600'}`}
+            >
+              {added ? <><Check className="h-4 w-4" />Added</> : <><Plus className="h-4 w-4" />MOQ</>}
+            </motion.button>
           </div>
         </div>
       </Tilt>
+
+      {/* meta */}
+      <div className="flex flex-1 flex-col pt-5">
+        <p className="num text-[12px] text-slate-600">
+          <span className={`mr-1.5 inline-block h-1.5 w-1.5 -translate-y-px rounded-full ${product.origin === 'Thailand' ? 'bg-brand-600' : 'bg-gold'}`} />
+          {product.origin}<span className="mx-1.5 text-line-strong">•</span>MOQ {product.moq} {product.unitLabel}s
+        </p>
+        <h3 className="mt-2 line-clamp-2 min-h-[2.5em] text-[15.5px] font-semibold leading-[1.25] text-ink">
+          <button onClick={open} className="text-left transition-colors hover:text-brand-800">{product.name}</button>
+        </h3>
+
+        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+          <p className="num min-w-0 text-[15px] leading-tight text-ink">
+            {priced ? (
+              <><span className="text-[11.5px] text-slate">from </span><span className="font-semibold">{formatBDT(lowestPrice(product))}</span><span className="text-[12px] text-slate"> / {product.unitLabel}</span></>
+            ) : (
+              <span className="text-[13.5px] font-semibold text-gold-dark">Price on request</span>
+            )}
+          </p>
+          <div className="flex shrink-0 items-center gap-1" role="radiogroup" aria-label={`${product.name} colour`}>
+            {product.variants.slice(0, 4).map((v) => (
+              <button
+                key={v.id}
+                role="radio"
+                aria-checked={v.id === vid}
+                aria-label={v.name}
+                title={v.name}
+                onClick={() => setVid(v.id)}
+                className="grid h-6 w-6 place-items-center rounded-full"
+              >
+                <span className={`block h-3.5 w-3.5 rounded-full ring-offset-2 transition-shadow ${v.id === vid ? 'ring-1 ring-ink' : 'ring-1 ring-black/10'}`} style={{ background: v.swatch }} />
+              </button>
+            ))}
+            {product.variants.length > 4 && <span className="num pl-0.5 text-[11px] text-slate">+{product.variants.length - 4}</span>}
+          </div>
+        </div>
+      </div>
     </motion.article>
   )
 }

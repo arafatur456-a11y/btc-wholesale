@@ -18,7 +18,7 @@ npm run build    # production build in dist/
 | Phone / WhatsApp / email, BDT formatting | `src/lib/pricing.ts` |
 | Bulk bag state (saved in the browser) | `src/context/CartContext.tsx` |
 | Sections | `src/components/*` (Header, Hero, Collections, Catalog, ProductCard, QuickView, HowItWorks, CartDrawer, Footer) |
-| Brand colours & fonts | `tailwind.config.js`, `index.html` |
+| Brand colours, hairline tokens & fonts (Fraunces + Plus Jakarta Sans) | `tailwind.config.js`, `src/index.css`, `index.html` |
 
 ## Swapping in real photos
 

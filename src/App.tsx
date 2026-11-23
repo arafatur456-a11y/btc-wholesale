@@ -40,8 +40,8 @@ export default function App() {
         <Footer onCategory={onCategory} />
         <QuickView product={qv?.product ?? null} initialVariant={qv?.variant} showPrices={showPrices} onClose={closeQv} />
         <CartDrawer />
-        <a href={waLink('Assalamu Alaikum BTC Wholesale Desk!')} target="_blank" rel="noreferrer" aria-label="Chat with BTC on WhatsApp" className="fixed bottom-5 right-5 z-30 grid h-14 w-14 place-items-center rounded-full bg-[#1FAF55] text-white shadow-lift transition-transform hover:scale-105">
-          <WhatsAppIcon className="h-7 w-7" />
+        <a href={waLink('Assalamu Alaikum BTC Wholesale Desk!')} target="_blank" rel="noreferrer" aria-label="Chat with BTC on WhatsApp" className="fixed bottom-5 right-5 z-30 grid h-[52px] w-[52px] place-items-center rounded-full bg-[#1FAF55] text-white shadow-lift ring-4 ring-white transition-transform duration-300 hover:scale-105 sm:bottom-8 sm:right-8">
+          <WhatsAppIcon className="h-6 w-6" />
         </a>
       </CartProvider>
     </MotionConfig>

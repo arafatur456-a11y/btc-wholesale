@@ -3,29 +3,20 @@ import type { ReactNode, PointerEvent } from 'react'
 import type { Origin, Product, Variant } from '../data/products'
 import { ORIGIN_META } from '../data/products'
 
-/* ---------- Origin badge ---------- */
-export function OriginBadge({ origin, size = 'sm' }: { origin: Origin; size?: 'sm' | 'md' }) {
+/* ---------- Origin label (quiet, text-first) ---------- */
+export function OriginBadge({ origin, size = 'sm', tone = 'light' }: { origin: Origin; size?: 'sm' | 'md'; tone?: 'light' | 'glass' }) {
   const th = origin === 'Thailand'
+  const base = tone === 'glass' ? 'bg-white/90 text-ink backdrop-blur ring-1 ring-black/5' : 'text-slate-600'
   return (
-    <span
-      className={`chip ${size === 'md' ? 'px-3 py-1.5 text-xs' : ''} ${th ? 'bg-brand-100 text-brand-900 ring-1 ring-brand-200' : 'bg-gold-50 text-gold-dark ring-1 ring-gold/40'}`}
-    >
-      <span aria-hidden className={`grid h-3.5 w-5 place-items-center rounded-[3px] text-[8px] font-extrabold ${th ? 'bg-brand-800 text-white' : 'bg-gold-dark text-white'}`}>
-        {ORIGIN_META[origin].code}
-      </span>
-      {ORIGIN_META[origin].label}
+    <span className={`inline-flex items-center gap-1.5 rounded-full font-semibold ${size === 'md' ? 'px-3 py-1.5 text-xs' : 'text-[12px]'} ${tone === 'glass' ? base : base}`}>
+      <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${th ? 'bg-brand-600' : 'bg-gold'}`} />
+      {ORIGIN_META[origin].code}
     </span>
   )
 }
 
 export function StatusBadge({ label }: { label: NonNullable<Product['badge']> }) {
-  const map: Record<string, string> = {
-    'Best Seller': 'bg-gold text-ink',
-    'New Lot': 'bg-ink text-white',
-    'Limited Lot': 'bg-[#8E1B2C] text-white',
-    'Fast Moving': 'bg-white text-ink ring-1 ring-ink/10',
-  }
-  return <span className={`chip shadow-sm ${map[label]}`}>{label}</span>
+  return <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-ink ring-1 ring-black/5 backdrop-blur">{label}</span>
 }
 
 /* ---------- Product imagery (photo, or illustrated placeholder for cosmetics) ---------- */
@@ -103,17 +94,15 @@ export function ProductImage({ product, variant, className = '', eager = false }
   )
 }
 
-/* ---------- 3D tilt wrapper with spring physics ---------- */
-export function Tilt({ children, className = '', max = 9, glare = true }: { children: ReactNode; className?: string; max?: number; glare?: boolean }) {
+/* ---------- 3D tilt wrapper with spring physics + light sheen ---------- */
+export function Tilt({ children, className = '', max = 6, glare = true }: { children: ReactNode; className?: string; max?: number; glare?: boolean }) {
   const reduce = useReducedMotion()
   const px = useMotionValue(0.5)
   const py = useMotionValue(0.5)
-  const cfg = { stiffness: 220, damping: 20, mass: 0.6 }
+  const cfg = { stiffness: 150, damping: 22, mass: 0.7 }
   const rx = useSpring(useTransform(py, [0, 1], [max, -max]), cfg)
   const ry = useSpring(useTransform(px, [0, 1], [-max, max]), cfg)
-  const gx = useTransform(px, (v) => `${v * 100}%`)
-  const gy = useTransform(py, (v) => `${v * 100}%`)
-  const glareBg = useTransform([gx, gy] as never, ([x, y]: string[]) => `radial-gradient(circle at ${x} ${y}, rgba(255,255,255,.35), transparent 55%)`)
+  const sheen = useTransform([px, py], ([x, y]: number[]) => `linear-gradient(${105 + (x - 0.5) * 40}deg, transparent ${20 + y * 20}%, rgba(255,255,255,.22) ${40 + x * 20}%, transparent ${62 + x * 20}%)`)
 
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
     if (reduce || e.pointerType === 'touch') return
@@ -124,7 +113,7 @@ export function Tilt({ children, className = '', max = 9, glare = true }: { chil
   const reset = () => { px.set(0.5); py.set(0.5) }
 
   return (
-    <div style={{ perspective: 1000 }} className={className}>
+    <div style={{ perspective: 1200 }} className={className}>
       <motion.div
         onPointerMove={onMove}
         onPointerLeave={reset}
@@ -133,7 +122,7 @@ export function Tilt({ children, className = '', max = 9, glare = true }: { chil
       >
         {children}
         {glare && !reduce && (
-          <motion.div aria-hidden style={{ background: glareBg }} className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 mix-blend-soft-light transition-opacity duration-300 group-hover:opacity-100" />
+          <motion.div aria-hidden style={{ background: sheen }} className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
         )}
       </motion.div>
     </div>
@@ -144,15 +133,15 @@ export function Tilt({ children, className = '', max = 9, glare = true }: { chil
 export function SectionHeading({ eyebrow, title, sub, align = 'left', dark = false }: { eyebrow: string; title: ReactNode; sub?: ReactNode; align?: 'left' | 'center'; dark?: boolean }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 'some' }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
       className={align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}
     >
-      <p className={`eyebrow ${dark ? 'text-brand' : ''}`}>{eyebrow}</p>
-      <h2 className={`mt-3 font-display text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.75rem] ${dark ? 'text-white' : 'text-ink'}`}>{title}</h2>
-      {sub && <p className={`mt-4 text-base leading-relaxed ${dark ? 'text-white/70' : 'text-slate-600'}`}>{sub}</p>}
+      <p className={`eyebrow ${dark ? '!text-brand' : ''}`}>{eyebrow}</p>
+      <h2 className={`display mt-6 text-[2.4rem] leading-[1.04] sm:text-5xl lg:text-[3.6rem] ${dark ? '!text-white' : ''}`}>{title}</h2>
+      {sub && <p className={`mt-6 max-w-xl text-[16px] leading-[1.75] ${dark ? 'text-white/65' : 'text-slate-600'}`}>{sub}</p>}
     </motion.div>
   )
 }

@@ -1,50 +1,52 @@
 import { motion } from 'framer-motion'
-import { Clock, Mail, MapPin, Phone, ShieldCheck } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { CATEGORIES, type Category } from '../data/products'
 import { EMAIL, PHONE_DISPLAY, PHONE_TEL, WHATSAPP_DISPLAY, waLink } from '../lib/pricing'
-import { SectionHeading, WhatsAppIcon } from './ui'
+import { SectionHeading } from './ui'
 
 export function Contact() {
-  const cards = [
-    { icon: WhatsAppIcon, label: 'WhatsApp wholesale desk', value: WHATSAPP_DISPLAY, href: waLink('Assalamu Alaikum BTC, I want wholesale rates.'), cta: 'Chat now', ext: true, accent: 'bg-[#1FAF55] text-white' },
-    { icon: Phone, label: 'Call the office', value: PHONE_DISPLAY, href: `tel:${PHONE_TEL}`, cta: 'Call now', accent: 'bg-brand text-ink' },
-    { icon: Mail, label: 'Email inquiries', value: EMAIL, href: `mailto:${EMAIL}?subject=${encodeURIComponent('Wholesale inquiry')}`, cta: 'Send email', accent: 'bg-ink text-white' },
+  const rows = [
+    { label: 'WhatsApp wholesale desk', value: WHATSAPP_DISPLAY, href: waLink('Assalamu Alaikum BTC, I want wholesale rates.'), ext: true },
+    { label: 'Office phone', value: PHONE_DISPLAY, href: `tel:${PHONE_TEL}` },
+    { label: 'Email inquiries', value: EMAIL, href: `mailto:${EMAIL}?subject=${encodeURIComponent('Wholesale inquiry')}` },
   ]
   return (
-    <section id="contact" className="bg-white py-20 lg:py-28">
-      <div className="container-x">
-        <div className="grid gap-10 lg:grid-cols-[1fr_1.3fr] lg:items-end">
-          <SectionHeading eyebrow="Contact the wholesale desk" title="Talk to us before your next restock" sub="Share your shop name and district — we'll send the current lot list, photos of new arrivals and your tier rates." />
-          <div className="flex items-start gap-3 rounded-2xl bg-gold-50 p-5 ring-1 ring-gold/40">
-            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-gold-dark" />
-            <p className="text-sm leading-relaxed text-ink"><span className="font-bold">Wholesale-only policy.</span> We supply registered shops, boutiques, online resellers and bridal parlours. Single-piece retail orders are not accepted — minimum order quantities apply per item.</p>
+    <section id="contact" className="section-y bg-white">
+      <div className="container-x grid gap-16 lg:grid-cols-12 lg:gap-10">
+        <div className="lg:col-span-5">
+          <SectionHeading eyebrow="Contact the wholesale desk" title={<>Talk to us before <em className="font-light italic text-brand-800">your next restock.</em></>} sub="Share your shop name and district. We will send the current lot list, photos of new arrivals and your tier rates." />
+          <div className="mt-12 border-l-2 border-gold pl-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-dark">Wholesale-only policy</p>
+            <p className="mt-3 max-w-md text-[14.5px] leading-[1.75] text-slate-600">We supply registered shops, boutiques, online resellers and bridal studios. Single-piece retail orders are not accepted; minimum order quantities apply per item.</p>
           </div>
         </div>
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
-          {cards.map(({ icon: Icon, label, value, href, cta, ext, accent }, i) => (
-            <motion.a
-              key={label}
-              href={href}
-              target={ext ? '_blank' : undefined}
-              rel={ext ? 'noreferrer' : undefined}
-              initial={{ opacity: 0, y: 20 }}
+
+        <ul className="border-t border-line-strong lg:col-span-6 lg:col-start-7 lg:self-end">
+          {rows.map((r, i) => (
+            <motion.li
+              key={r.label}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -4 }}
               viewport={{ once: true, amount: 'some' }}
-              transition={{ duration: 0.45, delay: i * 0.08 }}
-              className="group flex flex-col rounded-3xl bg-brand-50 p-6 ring-1 ring-brand-100 transition-shadow hover:shadow-lift"
+              transition={{ duration: 0.8, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="border-b border-line-strong"
             >
-              <span className={`grid h-12 w-12 place-items-center rounded-2xl ${accent}`}><Icon className="h-5 w-5" /></span>
-              <p className="mt-6 text-xs font-bold uppercase tracking-wider text-slate">{label}</p>
-              <p className="num mt-1 break-all text-lg font-bold text-ink sm:text-xl">{value}</p>
-              <span className="mt-6 text-sm font-semibold text-brand-800 group-hover:underline">{cta} →</span>
-            </motion.a>
+              <a href={r.href} target={r.ext ? '_blank' : undefined} rel={r.ext ? 'noreferrer' : undefined} className="group flex items-center justify-between gap-6 py-8">
+                <span className="min-w-0">
+                  <span className="block text-[12px] text-slate-600">{r.label}</span>
+                  <span className="display num mt-2 block break-all text-[22px] leading-tight transition-colors group-hover:text-brand-800 sm:text-[28px]">{r.value}</span>
+                </span>
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-line-strong transition-all duration-300 group-hover:border-ink group-hover:bg-ink group-hover:text-white">
+                  <ArrowUpRight className="h-5 w-5" />
+                </span>
+              </a>
+            </motion.li>
           ))}
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-2xl p-4 ring-1 ring-ink/10"><Clock className="h-5 w-5 text-brand-700" /><p className="text-sm text-slate-600"><span className="font-semibold text-ink">Desk hours:</span> Sat–Thu, 10:00 AM – 8:00 PM</p></div>
-          <div className="flex items-center gap-3 rounded-2xl p-4 ring-1 ring-ink/10"><MapPin className="h-5 w-5 text-brand-700" /><p className="text-sm text-slate-600"><span className="font-semibold text-ink">Dispatch:</span> Nationwide — all 64 districts by courier & cargo</p></div>
-        </div>
+          <li className="num flex flex-wrap gap-x-8 gap-y-2 pt-6 text-[13px] text-slate-600">
+            <span>Desk hours: Sat–Thu, 10:00–20:00</span>
+            <span>Nationwide courier &amp; cargo dispatch</span>
+          </li>
+        </ul>
       </div>
     </section>
   )
@@ -53,46 +55,45 @@ export function Contact() {
 export default function Footer({ onCategory }: { onCategory: (c: Category | 'all') => void }) {
   return (
     <footer className="bg-ink text-white">
-      <div className="container-x grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
-        <div>
-          <div className="flex items-center gap-3">
+      <div className="container-x grid gap-12 py-20 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <div className="flex items-center gap-4">
             <img src="/brand/logo.jpg" alt="" className="h-12 w-12 rounded-full" />
             <div>
-              <p className="font-display text-lg font-semibold">Billal Trading Corporation</p>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">Imported Jewellery & Cosmetics</p>
+              <p className="display text-[22px] !text-white">Billal Trading Corporation</p>
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/50">Imported Jewellery &amp; Cosmetics</p>
             </div>
           </div>
-          <p className="mt-5 max-w-xs text-sm leading-relaxed text-white/65">Importer and wholesaler of imitation jewellery & cosmetics from Thailand and Kashmir, supplying retailers across Bangladesh.</p>
-          <span className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-gold/50 px-3 py-1 text-[11.5px] font-bold text-gold-light"><span className="h-1.5 w-1.5 rounded-full bg-gold" />Wholesale business only</span>
+          <p className="mt-8 max-w-sm text-[14px] leading-[1.75] text-white/60">Importer and wholesaler of imitation jewellery and cosmetics from Thailand and Kashmir, supplying retailers across Bangladesh. Wholesale business only.</p>
         </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-white/50">Catalogue</p>
-          <ul className="mt-4 space-y-2.5 text-sm">
-            {CATEGORIES.map((c) => <li key={c.id}><button onClick={() => onCategory(c.id)} className="text-white/80 hover:text-brand">{c.label}</button></li>)}
+        <div className="lg:col-span-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45">Catalogue</p>
+          <ul className="mt-6 space-y-3 text-[14px]">
+            {CATEGORIES.map((c) => <li key={c.id}><button onClick={() => onCategory(c.id)} className="text-left text-white/75 transition-colors hover:text-white">{c.label}</button></li>)}
           </ul>
         </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-white/50">Trade</p>
-          <ul className="mt-4 space-y-2.5 text-sm text-white/80">
-            <li><a href="#how" className="hover:text-brand">How ordering works</a></li>
-            <li><a href="#collections" className="hover:text-brand">Thailand imports</a></li>
-            <li><a href="#collections" className="hover:text-brand">Kashmir imports</a></li>
-            <li><a href="#contact" className="hover:text-brand">Wholesale policy</a></li>
+        <div className="lg:col-span-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45">Trade</p>
+          <ul className="mt-6 space-y-3 text-[14px] text-white/75">
+            <li><a href="#how" className="hover:text-white">How ordering works</a></li>
+            <li><a href="#collections" className="hover:text-white">Thailand imports</a></li>
+            <li><a href="#collections" className="hover:text-white">Kashmir imports</a></li>
+            <li><a href="#contact" className="hover:text-white">Wholesale policy</a></li>
           </ul>
         </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-white/50">Contact</p>
-          <ul className="num mt-4 space-y-3 text-sm text-white/85">
-            <li><a href={`tel:${PHONE_TEL}`} className="inline-flex items-center gap-2 hover:text-brand"><Phone className="h-4 w-4 text-brand" />{PHONE_DISPLAY}</a></li>
-            <li><a href={waLink('Assalamu Alaikum BTC, I want wholesale rates.')} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-brand"><WhatsAppIcon className="h-4 w-4 text-brand" />{WHATSAPP_DISPLAY}</a></li>
-            <li><a href={`mailto:${EMAIL}`} className="inline-flex items-start gap-2 break-all hover:text-brand"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand" />{EMAIL}</a></li>
+        <div className="lg:col-span-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45">Contact</p>
+          <ul className="num mt-6 space-y-3 text-[14px] text-white/75">
+            <li><a href={`tel:${PHONE_TEL}`} className="hover:text-white">{PHONE_DISPLAY}</a></li>
+            <li><a href={waLink('Assalamu Alaikum BTC, I want wholesale rates.')} target="_blank" rel="noreferrer" className="hover:text-white">WhatsApp {WHATSAPP_DISPLAY}</a></li>
+            <li><a href={`mailto:${EMAIL}`} className="break-all hover:text-white">{EMAIL}</a></li>
           </ul>
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="container-x flex flex-col gap-2 py-5 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Billal Trading Corporation. All rights reserved.</p>
-          <p>Prices are indicative wholesale estimates in BDT and subject to lot availability.</p>
+        <div className="container-x flex flex-col gap-2 py-6 text-[12px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} Billal Trading Corporation</p>
+          <p>Rates are indicative wholesale estimates in BDT, subject to lot availability.</p>
         </div>
       </div>
     </footer>

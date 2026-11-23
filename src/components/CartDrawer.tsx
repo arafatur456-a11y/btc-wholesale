@@ -49,7 +49,7 @@ function Line({ l }: { l: ResolvedLine }) {
   const packs = l.qty / l.packUnits
   const below = l.qty < l.product.moq
   return (
-    <motion.li layout initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40, height: 0, marginTop: 0, paddingTop: 0, paddingBottom: 0 }} className="flex gap-3 overflow-hidden rounded-2xl bg-white p-3 ring-1 ring-ink/[0.07]">
+    <motion.li layout initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40, height: 0, marginTop: 0, paddingTop: 0, paddingBottom: 0 }} className="flex gap-3 overflow-hidden rounded-2xl bg-white p-3 ring-1 ring-line">
       <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-ink"><ProductImage product={l.product} variant={l.variant} className="h-full w-full" /></div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
@@ -117,7 +117,7 @@ export default function CartDrawer() {
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} className="absolute inset-0 bg-ink/55 backdrop-blur-sm" aria-hidden />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} className="absolute inset-0 bg-ink/45 backdrop-blur-md" aria-hidden />
           <motion.aside
             role="dialog"
             aria-modal="true"
@@ -126,13 +126,13 @@ export default function CartDrawer() {
             animate={reduce ? { opacity: 1 } : { x: 0 }}
             exit={reduce ? { opacity: 0 } : { x: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 36 }}
-            className="absolute inset-y-0 right-0 flex w-full max-w-[460px] flex-col bg-brand-50 shadow-2xl"
+            className="absolute inset-y-0 right-0 flex w-full max-w-[460px] flex-col bg-ice shadow-frame"
           >
             {/* header */}
             <div className="flex items-center gap-3 border-b border-ink/10 bg-white px-5 py-4">
               {step === 'send' && <button onClick={() => setStep('bag')} aria-label="Back to bag" className="grid h-9 w-9 place-items-center rounded-full hover:bg-brand-50"><ArrowLeft className="h-5 w-5" /></button>}
               <div className="min-w-0 flex-1">
-                <p className="font-display text-xl font-semibold text-ink">{step === 'bag' ? 'Bulk Order Bag' : 'Send wholesale inquiry'}</p>
+                <p className="display text-[24px] leading-tight">{step === 'bag' ? 'Bulk Order Bag' : 'Send wholesale inquiry'}</p>
                 <p className="num text-xs text-slate">{step === 'bag' ? `${lines.length} lines · ${totalUnits} units` : `Ref ${ref}`}</p>
               </div>
               <button onClick={close} aria-label="Close bulk bag" autoFocus className="grid h-10 w-10 place-items-center rounded-full bg-brand-50 hover:bg-brand-100"><X className="h-5 w-5" /></button>
@@ -152,7 +152,7 @@ export default function CartDrawer() {
               <div className="grid flex-1 place-items-center px-8 text-center">
                 <div>
                   <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white shadow-card"><PackageOpen className="h-7 w-7 text-brand-700" /></div>
-                  <p className="mt-5 font-display text-xl font-semibold">Your bulk bag is empty</p>
+                  <p className="display mt-6 text-2xl">Your bulk bag is empty</p>
                   <p className="mt-1 text-sm text-slate-600">Add lots from the catalogue — each item starts at its minimum order quantity.</p>
                   <a href="#catalog" onClick={close} className="btn-dark mt-6">Browse wholesale catalog</a>
                 </div>
@@ -171,7 +171,7 @@ export default function CartDrawer() {
                   </dl>
                   {hasQuoteItems && <p className="mt-2 rounded-lg bg-gold-50 px-3 py-2 text-[11.5px] font-medium text-gold-dark">Includes bridal/premium lots priced on quote — shown at indicative rates.</p>}
                   {belowMoq && <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-[#8E1B2C]"><AlertCircle className="h-3.5 w-3.5" />Some lines are below MOQ — adjust before sending.</p>}
-                  <button disabled={belowMoq} onClick={() => setStep('send')} className="btn-dark mt-4 h-12 w-full">Continue to send inquiry</button>
+                  <button disabled={belowMoq} onClick={() => setStep('send')} className="btn-dark mt-5 w-full">Continue to send inquiry</button>
                 </div>
               </>
             ) : (
@@ -204,7 +204,7 @@ export default function CartDrawer() {
                   </div>
                 </div>
                 <div className="space-y-2 border-t border-ink/10 bg-white p-5">
-                  <button type="submit" disabled={!valid} className="btn-wa h-12 w-full"><WhatsAppIcon className="h-5 w-5" />Send order on WhatsApp</button>
+                  <button type="submit" disabled={!valid} className="btn-wa w-full"><WhatsAppIcon className="h-5 w-5" />Send order on WhatsApp</button>
                   <button type="button" disabled={!valid} onClick={sendMail} className="btn-ghost h-11 w-full"><Mail className="h-4 w-4" />Email inquiry instead</button>
                   <p className="num text-center text-[11px] text-slate">WhatsApp {WHATSAPP_DISPLAY} · {EMAIL}</p>
                 </div>

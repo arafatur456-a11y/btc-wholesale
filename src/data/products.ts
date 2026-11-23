@@ -270,6 +270,6 @@ export const PRODUCTS: Product[] = [
 ]
 
 export const ORIGIN_META: Record<Origin, { code: string; label: string; blurb: string }> = {
-  Thailand: { code: 'TH', label: 'Thailand Import', blurb: 'Bangkok-sourced AD stone sets, cat-eye jhumkas, waist chains and cosmetics — consistent plating, fast-moving lots.' },
-  Kashmir: { code: 'KR', label: 'Kashmir Import', blurb: 'Kundan, meena and antique-finish bridal craft from Kashmir artisans — heavier pieces for bridal and premium counters.' },
+  Thailand: { code: 'Thailand', label: 'Thailand Import', blurb: 'Bangkok-sourced AD stone sets, cat-eye jhumkas, waist chains and cosmetics — consistent plating, fast-moving lots.' },
+  Kashmir: { code: 'Kashmir', label: 'Kashmir Import', blurb: 'Kundan, meena and antique-finish bridal craft from Kashmir artisans — heavier pieces for bridal and premium counters.' },
 }

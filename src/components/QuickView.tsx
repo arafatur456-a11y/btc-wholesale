@@ -5,7 +5,7 @@ import type { Product } from '../data/products'
 import { useCart } from '../context/CartContext'
 import { useModalBehaviour } from '../lib/useLockBody'
 import { formatBDT, unitPriceFor, waLink } from '../lib/pricing'
-import { OriginBadge, ProductImage, StatusBadge, WhatsAppIcon } from './ui'
+import { OriginBadge, ProductImage, WhatsAppIcon } from './ui'
 
 interface Props { product: Product | null; initialVariant?: string; showPrices: boolean; onClose: () => void }
 
@@ -50,7 +50,7 @@ function Body({ product, initialVariant, showPrices, onClose }: Props & { produc
               <ProductImage product={product} variant={variant} eager className="h-full w-full" />
             </motion.div>
           </AnimatePresence>
-          <div className="absolute left-4 top-4 flex flex-wrap gap-2"><OriginBadge origin={product.origin} size="md" />{product.badge && <StatusBadge label={product.badge} />}</div>
+          <div className="absolute left-4 top-4"><OriginBadge origin={product.origin} size="md" tone="glass" /></div>
         </div>
         <div className="flex gap-2 overflow-x-auto bg-ink p-3 [scrollbar-width:thin]">
           {product.variants.map((v) => (
@@ -66,7 +66,7 @@ function Body({ product, initialVariant, showPrices, onClose }: Props & { produc
         <div className="flex items-start justify-between gap-4 p-6 pb-0 sm:p-8 sm:pb-0">
           <div>
             <p className="num text-xs font-semibold uppercase tracking-wider text-slate">{product.sku}</p>
-            <h2 id="qv-title" className="mt-1 font-display text-2xl font-semibold leading-tight text-ink sm:text-[1.75rem]">{product.name}</h2>
+            <h2 id="qv-title" className="display mt-2 text-[1.75rem] leading-[1.1] sm:text-[2rem]">{product.name}</h2>
           </div>
           <button ref={closeRef} onClick={onClose} aria-label="Close quick view" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-50 text-ink hover:bg-brand-100"><X className="h-5 w-5" /></button>
         </div>
@@ -87,8 +87,8 @@ function Body({ product, initialVariant, showPrices, onClose }: Props & { produc
           </div>
 
           {/* tier table */}
-          <div className="overflow-hidden rounded-2xl ring-1 ring-ink/10">
-            <div className="flex items-center justify-between bg-brand-50 px-4 py-2.5">
+          <div className="overflow-hidden rounded-2xl ring-1 ring-line-strong">
+            <div className="flex items-center justify-between bg-ice px-4 py-2.5">
               <p className="text-xs font-bold uppercase tracking-wider text-ink">Wholesale tiers</p>
               <p className="num text-xs font-semibold text-slate-600">per {product.unitLabel}</p>
             </div>
@@ -156,7 +156,7 @@ function Body({ product, initialVariant, showPrices, onClose }: Props & { produc
             <motion.button whileTap={{ scale: 0.97 }} disabled={belowMoq} onClick={() => addToBag(false)} className={`btn h-12 ${added ? 'bg-ink text-white' : 'bg-brand text-ink hover:bg-brand-600'}`}>
               {added ? <><Check className="h-4 w-4" /> Added to bulk order</> : <><ShoppingBag className="h-4 w-4" /> Add to Bulk Order</>}
             </motion.button>
-            <a href={waLink(waText)} target="_blank" rel="noreferrer" aria-label="Ask about this item on WhatsApp" className="btn-wa h-12 px-4"><WhatsAppIcon className="h-5 w-5" /></a>
+            <a href={waLink(waText)} target="_blank" rel="noreferrer" aria-label="Ask about this item on WhatsApp" className="btn-wa w-12 px-0"><WhatsAppIcon className="h-5 w-5" /></a>
           </div>
           <button disabled={belowMoq} onClick={() => addToBag(true)} className="mt-2 w-full text-center text-xs font-semibold text-slate-600 underline-offset-2 hover:text-ink hover:underline disabled:opacity-50">Add & review bulk bag →</button>
         </div>
@@ -172,7 +172,7 @@ export default function QuickView(props: Props) {
     <AnimatePresence>
       {props.product && (
         <motion.div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <div className="absolute inset-0 bg-ink/60 backdrop-blur-sm" onClick={props.onClose} aria-hidden />
+          <div className="absolute inset-0 bg-ink/50 backdrop-blur-md" onClick={props.onClose} aria-hidden />
           <motion.div
             role="dialog"
             aria-modal="true"
@@ -182,7 +182,7 @@ export default function QuickView(props: Props) {
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 30, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 260, damping: 28 }}
             style={{ transformPerspective: 1200 }}
-            className="relative w-full max-w-5xl overflow-hidden rounded-t-[28px] bg-white shadow-2xl md:rounded-[28px]"
+            className="relative w-full max-w-5xl overflow-hidden rounded-t-[28px] bg-white shadow-frame md:rounded-[24px]"
           >
             <Body {...props} product={props.product} key={props.product.id} />
           </motion.div>
