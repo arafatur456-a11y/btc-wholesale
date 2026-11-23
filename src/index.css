@@ -18,6 +18,7 @@
   .hairline { @apply border-line; }
 
   .btn { @apply inline-flex h-12 items-center justify-center gap-2.5 whitespace-nowrap rounded-full px-7 text-[14px] font-semibold tracking-[0.01em] transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40; }
+  .btn svg { flex-shrink: 0; }
   .btn-dark { @apply btn bg-ink text-white hover:bg-ink-3; }
   .btn-primary { @apply btn bg-brand text-ink hover:bg-brand-600; }
   .btn-ghost { @apply btn border border-ink/15 bg-white text-ink hover:border-ink/40; }

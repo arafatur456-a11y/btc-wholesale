@@ -1,12 +1,13 @@
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
 import { SearchX, X } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CATEGORIES, PRODUCTS, type Product } from '../data/products'
 import type { Filters, SortKey } from '../lib/filters'
 import { DEFAULT_FILTERS } from '../lib/filters'
-import { basePrice, lowestPrice } from '../lib/pricing'
+import { basePrice, lowestPrice, waLink } from '../lib/pricing'
+import { ScrollDepth } from '../lib/motion'
 import ProductCard from './ProductCard'
-import { SectionHeading } from './ui'
+import { SectionHeading, WhatsAppIcon } from './ui'
 
 interface Props {
   filters: Filters
@@ -17,6 +18,39 @@ interface Props {
 }
 
 const COLLECTION_LABEL: Record<string, string> = { bridal: 'Bridal & Stone Sets', jhumka: 'Jhumka Collection', waist: 'Waist Chains', accessories: 'Waist Chains & Accessories', cosmetics: 'Cosmetics' }
+
+/** Mirrors the grid's responsive breakpoints so trailing rows can be filled. */
+function useColumns() {
+  const get = () => (typeof window === 'undefined' ? 4 : window.innerWidth >= 1280 ? 4 : window.innerWidth >= 1024 ? 3 : window.innerWidth >= 640 ? 2 : 1)
+  const [cols, setCols] = useState(get)
+  useEffect(() => {
+    const on = () => setCols(get())
+    window.addEventListener('resize', on)
+    return () => window.removeEventListener('resize', on)
+  }, [])
+  return cols
+}
+
+function CustomLotTile({ index }: { index: number }) {
+  return (
+    <motion.div layout initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} exit={{ opacity: 0 }} viewport={{ once: true, amount: 'some' }} transition={{ duration: 0.8 }} className="h-full">
+      <ScrollDepth tilt={14} turn={((index % 4) - 1.5) * -5} depth={-90} className="h-full">
+        <div className="relative flex h-full min-h-[420px] flex-col justify-between overflow-hidden rounded-[24px] bg-ink p-7 text-white shadow-lift">
+          <div aria-hidden className="absolute -right-24 -top-24 h-64 w-64 rounded-full border border-gold/40" />
+          <div aria-hidden className="absolute -right-10 -top-10 h-40 w-40 rounded-full border border-brand/40" />
+          <div className="relative">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-light">Custom wholesale lot</p>
+            <p className="display mt-5 text-[30px] leading-[1.1] !text-white">Need a mixed <em className="font-light italic text-brand">colour & design</em> lot?</p>
+            <p className="mt-4 text-[14px] leading-[1.7] text-white/65">Tell the desk your budget and counter mix. We will build an assorted lot from current Thailand and Kashmir stock.</p>
+          </div>
+          <a href={waLink('Assalamu Alaikum BTC, I want a custom mixed wholesale lot. My budget & preferences:')} target="_blank" rel="noreferrer" className="btn-wa relative mt-8 w-full px-5">
+            <WhatsAppIcon className="h-[18px] w-[18px]" /> Plan it on WhatsApp
+          </a>
+        </div>
+      </ScrollDepth>
+    </motion.div>
+  )
+}
 
 export default function Catalog({ filters, setFilters, showPrices, setShowPrices, onQuickView }: Props) {
   const set = (patch: Partial<Filters>) => setFilters({ ...filters, ...patch })
@@ -44,6 +78,19 @@ export default function Catalog({ filters, setFilters, showPrices, setShowPrices
     return m
   }, [])
 
+  const cols = useColumns()
+  const filler = useMemo(() => {
+    const rem = results.length % cols
+    if (!results.length || !rem) return { custom: false, related: [] as Product[] }
+    const slots = cols - rem
+    const ids = new Set(results.map((p) => p.id))
+    const pool = PRODUCTS.filter((p) => !ids.has(p.id))
+    // prefer same origin / same category as the current view, then anything else
+    const score = (p: Product) => (filters.origin !== 'all' && p.origin === filters.origin ? 2 : 0) + (filters.category !== 'all' && p.category === filters.category ? 1 : 0)
+    const related = [...pool].sort((a, b) => score(b) - score(a)).slice(0, slots - 1)
+    return { custom: true, related }
+  }, [results, cols, filters.origin, filters.category])
+
   const activeChips = [
     filters.collection !== 'all' && { k: 'collection', label: COLLECTION_LABEL[filters.collection], clear: () => set({ collection: 'all' }) },
     filters.query && { k: 'query', label: `“${filters.query}”`, clear: () => set({ query: '' }) },
@@ -51,7 +98,7 @@ export default function Catalog({ filters, setFilters, showPrices, setShowPrices
   ].filter(Boolean) as { k: string; label: string; clear: () => void }[]
 
   return (
-    <section id="catalog" className="section-y border-t border-line bg-white">
+    <section id="catalog" className="section-y border-t border-line bg-ice">
       <div className="container-x">
         <div className="flex flex-col justify-between gap-10 lg:flex-row lg:items-end">
           <SectionHeading
@@ -74,7 +121,7 @@ export default function Catalog({ filters, setFilters, showPrices, setShowPrices
         </div>
 
         {/* toolbar */}
-        <div className="relative z-20 mt-16 border-y border-line bg-white/90 backdrop-blur-xl lg:sticky lg:top-[109px]">
+        <div className="relative z-20 mt-16 border-y border-line-strong bg-ice/90 backdrop-blur-xl lg:sticky lg:top-[109px]">
           <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:gap-8">
             <LayoutGroup id="cat">
               <div className="-mb-px flex gap-1 overflow-x-auto [scrollbar-width:none]" role="tablist" aria-label="Category">
@@ -96,7 +143,7 @@ export default function Catalog({ filters, setFilters, showPrices, setShowPrices
                   const on = filters.origin === o
                   return (
                     <button key={o} onClick={() => set({ origin: o })} aria-pressed={on} className={`relative inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] transition-colors ${on ? 'font-semibold text-ink' : 'text-slate-600 hover:text-ink'}`}>
-                      {on && <motion.span layoutId="origin-indicator" className="absolute inset-0 rounded-full bg-ice ring-1 ring-line-strong" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />}
+                      {on && <motion.span layoutId="origin-indicator" className="absolute inset-0 rounded-full bg-white ring-1 ring-line-strong" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />}
                       {o !== 'all' && <span className={`relative h-1.5 w-1.5 rounded-full ${o === 'Thailand' ? 'bg-brand-600' : 'bg-gold'}`} />}
                       <span className="relative">{o === 'all' ? 'All origins' : o}</span>
                     </button>
@@ -129,9 +176,11 @@ export default function Catalog({ filters, setFilters, showPrices, setShowPrices
           {activeChips.length > 0 && <button onClick={() => setFilters({ ...DEFAULT_FILTERS, sort: filters.sort })} className="btn-link ml-1 text-[12px]">Reset</button>}
         </div>
 
-        <motion.div layout className="mt-10 grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-8 xl:grid-cols-4">
+        <motion.div layout className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7 xl:grid-cols-4">
           <AnimatePresence mode="popLayout">
             {results.map((p, i) => <ProductCard key={p.id} product={p} index={i} showPrices={showPrices} onQuickView={onQuickView} />)}
+            {filler.custom && <CustomLotTile key="custom-lot" index={results.length} />}
+            {filler.related.map((p, i) => <ProductCard key={`rel-${p.id}`} related product={p} index={results.length + 1 + i} showPrices={showPrices} onQuickView={onQuickView} />)}
           </AnimatePresence>
         </motion.div>
 

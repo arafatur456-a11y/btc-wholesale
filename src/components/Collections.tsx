@@ -5,6 +5,7 @@ import { PRODUCTS, type Product } from '../data/products'
 import type { Filters } from '../lib/filters'
 import { formatBDT, lowestPrice } from '../lib/pricing'
 import { SectionHeading } from './ui'
+import { ScrollDepth } from '../lib/motion'
 
 interface Tab {
   id: string
@@ -93,45 +94,67 @@ export default function Collections({ onApply }: { onApply: (f: Partial<Filters>
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-14 grid gap-14 lg:grid-cols-12 lg:gap-10"
+            className="mt-14 grid gap-12 lg:grid-cols-12 lg:gap-12"
           >
-            <div className="flex flex-col justify-between gap-12 lg:col-span-5 lg:py-4">
+            <div className="flex flex-col gap-10 lg:col-span-5 lg:self-center lg:pr-6">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate">{tab.kicker}</p>
                 <h3 className="display mt-5 text-[2rem] leading-[1.1] sm:text-[2.5rem]">{tab.title}</h3>
                 <p className="mt-6 max-w-md text-[15.5px] leading-[1.8] text-slate-600">{tab.body}</p>
               </div>
+              <dl className="grid grid-cols-3 border-y border-line-strong">
+                {[
+                  { k: 'Wholesale lines', v: stats.skus.toString() },
+                  { k: 'Colourways', v: stats.variants.toString() },
+                  { k: 'Rates from', v: formatBDT(stats.from) },
+                ].map((s, i) => (
+                  <div key={s.k} className={`py-6 ${i ? 'border-l border-line-strong pl-5' : ''}`}>
+                    <dd className="display num text-[26px] leading-none sm:text-[30px]">{s.v}</dd>
+                    <dt className="mt-2 text-[12px] text-slate-600">{s.k}</dt>
+                  </div>
+                ))}
+              </dl>
               <div>
-                <dl className="grid grid-cols-3 border-y border-line-strong">
-                  {[
-                    { k: 'Wholesale lines', v: stats.skus.toString() },
-                    { k: 'Colourways', v: stats.variants.toString() },
-                    { k: 'Rates from', v: formatBDT(stats.from) },
-                  ].map((s, i) => (
-                    <div key={s.k} className={`py-6 ${i ? 'border-l border-line-strong pl-5' : ''}`}>
-                      <dd className="display num text-[26px] leading-none sm:text-[30px]">{s.v}</dd>
-                      <dt className="mt-2 text-[12px] text-slate-600">{s.k}</dt>
-                    </div>
-                  ))}
-                </dl>
-                <button onClick={() => onApply(tab.apply)} className="btn-dark group mt-10">
+                <button onClick={() => onApply(tab.apply)} className="btn-dark group">
                   View {stats.skus} lines in the catalogue <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:col-span-7">
-              {tab.images.slice(0, 2).map((src, i) => (
-                <motion.figure
-                  key={src}
-                  initial={{ opacity: 0, y: 24, rotateX: 6 }}
-                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                  transition={{ delay: 0.08 * i, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transformPerspective: 1000 }}
-                  className={`group relative aspect-[4/5] overflow-hidden rounded-[22px] bg-ink ring-1 ring-black/5 ${i === 1 ? 'mt-12 sm:mt-20' : ''}`}
-                >
-                  <img src={src} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]" />
-                </motion.figure>
-              ))}
+
+            {/* balanced mosaic: one tall feature + two stacked, scroll-linked 3D depth */}
+            <div className="grid aspect-[6/5] grid-cols-5 grid-rows-2 gap-3 sm:gap-5 lg:col-span-7">
+              {tab.images.slice(0, 3).map((src, i) => {
+                const feature = i === 0
+                return (
+                  <ScrollDepth
+                    key={src}
+                    tilt={feature ? 12 : 16}
+                    turn={feature ? 8 : -10}
+                    parallax={feature ? 10 : 26 + i * 8}
+                    depth={feature ? -60 : -120}
+                    origin={feature ? '100% 100%' : '0% 100%'}
+                    className={feature ? 'col-span-3 row-span-2' : 'col-span-2'}
+                  >
+                    <motion.figure
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.08 * i, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                      className="group relative h-full overflow-hidden rounded-[22px] bg-ink shadow-lift ring-1 ring-black/5"
+                    >
+                      <img src={src} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.05]" />
+                      {feature && (
+                        <figcaption className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-2xl bg-white/90 py-2.5 pl-4 pr-2.5 backdrop-blur sm:inset-x-4 sm:bottom-4">
+                          <span className="min-w-0">
+                            <span className="block truncate text-[13px] font-semibold text-ink">{tab.label}</span>
+                            <span className="num block text-[12px] text-slate-600">{stats.skus} lines · from {formatBDT(stats.from)}</span>
+                          </span>
+                          <button onClick={() => onApply(tab.apply)} aria-label={`View ${tab.label} in catalogue`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink text-white transition-transform duration-300 group-hover:translate-x-0.5"><ArrowRight className="h-4 w-4" /></button>
+                        </figcaption>
+                      )}
+                    </motion.figure>
+                  </ScrollDepth>
+                )
+              })}
             </div>
           </motion.div>
         </AnimatePresence>

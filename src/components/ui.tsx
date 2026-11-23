@@ -1,6 +1,7 @@
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion'
 import type { ReactNode, PointerEvent } from 'react'
 import type { Origin, Product, Variant } from '../data/products'
+import { ScrollDepth } from '../lib/motion'
 import { ORIGIN_META } from '../data/products'
 
 /* ---------- Origin label (quiet, text-first) ---------- */
@@ -132,17 +133,18 @@ export function Tilt({ children, className = '', max = 6, glare = true }: { chil
 /* ---------- Section heading ---------- */
 export function SectionHeading({ eyebrow, title, sub, align = 'left', dark = false }: { eyebrow: string; title: ReactNode; sub?: ReactNode; align?: 'left' | 'center'; dark?: boolean }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 'some' }}
-      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-      className={align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}
-    >
-      <p className={`eyebrow ${dark ? '!text-brand' : ''}`}>{eyebrow}</p>
-      <h2 className={`display mt-6 text-[2.4rem] leading-[1.04] sm:text-5xl lg:text-[3.6rem] ${dark ? '!text-white' : ''}`}>{title}</h2>
-      {sub && <p className={`mt-6 max-w-xl text-[16px] leading-[1.75] ${dark ? 'text-white/65' : 'text-slate-600'}`}>{sub}</p>}
-    </motion.div>
+    <ScrollDepth tilt={16} depth={-110} parallax={14} origin={align === 'center' ? '50% 100%' : '0% 100%'} className={align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 'some' }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <p className={`eyebrow ${dark ? '!text-brand' : ''}`}>{eyebrow}</p>
+        <h2 className={`display mt-6 text-[2.4rem] leading-[1.04] sm:text-5xl lg:text-[3.6rem] ${dark ? '!text-white' : ''}`}>{title}</h2>
+        {sub && <p className={`mt-6 max-w-xl text-[16px] leading-[1.75] ${dark ? 'text-white/65' : 'text-slate-600'}`}>{sub}</p>}
+      </motion.div>
+    </ScrollDepth>
   )
 }
 
